@@ -60,7 +60,7 @@ const Product = () => {
     // Fetch categories
     setCategoryLoading(true);
     axios
-      .get("http://localhost:3003/api/categories/categories")
+      .get("https://api.bzcart.store/api/categories/categories")
       .then((response) => {
         const validCategories = Array.isArray(response.data)
           ? response.data.filter(
