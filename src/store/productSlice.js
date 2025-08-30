@@ -6,7 +6,7 @@ export const createProduct = createAsyncThunk(
   async (productData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        "http://72.60.104.192:3003/api/products/create-product",
+        "http://localhost:3003/api/products/create-product",
         productData
       );
       return response.data;
@@ -23,7 +23,7 @@ export const fetchProducts = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "http://72.60.104.192:3003/api/products/products"
+        "http://localhost:3003/api/products/products"
       );
       return response.data;
     } catch (err) {
@@ -39,7 +39,7 @@ export const fetchProductsByCategory = createAsyncThunk(
   async (categoryId, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `http://72.60.104.192:3003/api/products/category/${categoryId}`
+        `http://localhost:3003/api/products/category/${categoryId}`
       );
       return response.data;
     } catch (err) {
@@ -55,7 +55,7 @@ export const fetchProductById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `http://72.60.104.192:3003/api/products/product/${id}`
+        `http://localhost:3003/api/products/product/${id}`
       );
       return response.data;
     } catch (err) {
@@ -71,7 +71,7 @@ export const fetchReviews = createAsyncThunk(
   async (productId, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `http://72.60.104.192:3003/api/reviews/${productId}`
+        `http://localhost:3003/api/reviews/${productId}`
       );
       return response.data;
     } catch (err) {
@@ -88,7 +88,7 @@ export const submitReview = createAsyncThunk(
     try {
       const user = JSON.parse(localStorage.getItem("myUser"));
       const response = await axios.post(
-        `http://72.60.104.192:3003/api/reviews/${productId}`,
+        `http://localhost:3003/api/reviews/${productId}`,
         reviewData,
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
@@ -106,7 +106,7 @@ export const deleteProduct = createAsyncThunk(
   async (productId, { rejectWithValue }) => {
     try {
       const response = await axios.delete(
-        `http://72.60.104.192:3003/api/products/product/${productId}`
+        `http://localhost:3003/api/products/product/${productId}`
       );
       return { productId, message: response.data.message };
     } catch (err) {
@@ -122,7 +122,7 @@ export const updateProduct = createAsyncThunk(
   async ({ id, productData }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `http://72.60.104.192:3003/api/products/product/${id}`,
+        `http://localhost:3003/api/products/product/${id}`,
         productData
       );
       return response.data;
