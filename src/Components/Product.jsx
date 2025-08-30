@@ -60,7 +60,7 @@ const Product = () => {
     // Fetch categories
     setCategoryLoading(true);
     axios
-      .get("http://localhost:3003/api/categories/categories")
+      .get("http://72.60.104.192:3003/api/categories/categories")
       .then((response) => {
         const validCategories = Array.isArray(response.data)
           ? response.data.filter(

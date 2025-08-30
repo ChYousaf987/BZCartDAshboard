@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:3003/api/slides";
+const BASE_URL = "http://72.60.104.192:3003/api/slides";
 
 export const createSlide = async (slideData) => {
   const formData = new FormData();
