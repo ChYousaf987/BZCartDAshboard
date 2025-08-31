@@ -51,7 +51,7 @@ export default function ImageUpload({ formFields, setFormFields }) {
         });
 
         let response = await axios.post(
-          "https://api.cloudinary.com/v1_1/dibwum71a/image/upload",
+          "https://bzbackend.online/v1_1/dibwum71a/image/upload",
           data,
           {
             headers: { "Content-Type": "multipart/form-data" },

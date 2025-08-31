@@ -13,7 +13,7 @@ export const loginUser = createAsyncThunk(
   async ({ email, password }, thunkAPI) => {
     try {
       const response = await axios.post(
-        "https://api.bzcart.store/api/admins/login-admin",
+        "https://bzbackend.online/api/admins/login-admin",
         { email, password }
       );
       const userData = {
@@ -37,7 +37,7 @@ export const registerUser = createAsyncThunk(
   async ({ username, email, password }, thunkAPI) => {
     try {
       const response = await axios.post(
-        "https://api.bzcart.store/api/users/register-user",
+        "https://bzbackend.online/api/users/register-user",
         { username, email, password }
       );
       const userData = {
@@ -62,7 +62,7 @@ export const createAdmin = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "https://api.bzcart.store/api/admins/create-admin",
+        "https://bzbackend.online/api/admins/create-admin",
         { username, email, password },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +84,7 @@ export const fetchPendingUsers = createAsyncThunk(
         ? { headers: { Authorization: `Bearer ${token}` } }
         : {};
       const response = await axios.get(
-        "https://api.bzcart.store/api/users/pending-users",
+        "https://bzbackend.online/api/users/pending-users",
         config
       );
       return response.data;
@@ -103,7 +103,7 @@ export const approveUser = createAsyncThunk(
         ? { headers: { Authorization: `Bearer ${token}` } }
         : {};
       const response = await axios.post(
-        "https://api.bzcart.store/api/users/approve-user",
+        "https://bzbackend.online/api/users/approve-user",
         { userId },
         config
       );

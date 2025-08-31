@@ -63,7 +63,7 @@ const AddProduct = () => {
       try {
         setCategoryLoading(true);
         const response = await axios.get(
-          "http://72.60.104.192:3003/api/categories/categories"
+          "https://bzbackend.online/api/categories/categories"
         );
         const validCategories = Array.isArray(response.data)
           ? response.data.filter(

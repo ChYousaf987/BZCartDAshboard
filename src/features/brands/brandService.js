@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Hardcoded URL to bypass proxy issues
-const API_URL = "http://72.60.104.192:3003/api/brands/";
+const API_URL = "https://bzbackend.online/api/brands/";
 
 // Axios interceptor to debug requests
 axios.interceptors.request.use(

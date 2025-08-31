@@ -23,7 +23,7 @@ const ManageCategories = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        "http://72.60.104.192:3003/api/categories/categories"
+        "https://bzbackend.online/api/categories/categories"
       );
       setCategories(response.data);
     } catch (err) {
@@ -42,13 +42,13 @@ const ManageCategories = () => {
     try {
       if (editingCategory) {
         await axios.put(
-          `http://72.60.104.192:3003/api/categories/category/${editingCategory._id}`,
+          `https://bzbackend.online/api/categories/category/${editingCategory._id}`,
           formData
         );
         toast.success("Category updated successfully!");
       } else {
         await axios.post(
-          `http://72.60.104.192:3003/api/categories/create-category`,
+          `https://bzbackend.online/api/categories/create-category`,
           formData
         );
         toast.success("Category created successfully!");
@@ -75,7 +75,7 @@ const ManageCategories = () => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
         await axios.delete(
-          `http://72.60.104.192:3003/api/categories/category/${categoryId}`
+          `https://bzbackend.online/api/categories/category/${categoryId}`
         );
         toast.success("Category deleted successfully!");
         fetchCategories();

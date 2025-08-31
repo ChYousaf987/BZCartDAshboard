@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const regUser = async (data) => {
   const response = await axios.post(
-    "https://api.bzcart.store/api/users/register-user",
+    "https://bzbackend.online/api/users/register-user",
     data
   );
 
@@ -15,7 +15,7 @@ export const regUser = async (data) => {
 
 export const logUser = async (data) => {
   const response = await axios.post(
-    "https://api.bzcart.store/api/users/login-user",
+    "https://bzbackend.online/api/users/login-user",
     data
   );
 
@@ -38,7 +38,7 @@ export const verifyOTP = async (otpData, token) => {
   };
 
   const response = await axios.post(
-    `https://api.bzcart.store/api/users/verify-otp`,
+    `https://bzbackend.online/api/users/verify-otp`,
     otpData,
     config
   );
