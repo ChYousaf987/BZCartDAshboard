@@ -116,6 +116,7 @@ const Orders = () => {
     {
       _id: "dummy-order-1",
       user_id: "1",
+      full_name: "John Doe",
       order_email: "superadmin@example.com",
       phone_number: "+12345678901",
       products: [
@@ -134,6 +135,7 @@ const Orders = () => {
     {
       _id: "dummy-order-2",
       user_id: "guest_12345",
+      full_name: "Jane Smith",
       order_email: "guest.user@example.com",
       phone_number: "+19876543210",
       products: [
@@ -251,8 +253,8 @@ const Orders = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-normal">
-                      {order.order_email || (
-                        <span className="text-gray-500">No email</span>
+                      {order.full_name || order.order_email || (
+                        <span className="text-gray-500">No name/email</span>
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-normal hidden sm:table-cell">

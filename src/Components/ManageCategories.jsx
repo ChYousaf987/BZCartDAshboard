@@ -22,15 +22,10 @@ const ManageCategories = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        "https://bzbackend.online/api/categories/categories"
-      );
+      const response = await axios.get("https://bzbackend.online/api/categories/categories");
       setCategories(response.data);
     } catch (err) {
-      console.error(
-        "Fetch categories error:",
-        err.response?.data || err.message
-      );
+      console.error("Fetch categories error:", err.response?.data || err.message);
       toast.error(err.response?.data?.message || "Failed to fetch categories");
     } finally {
       setLoading(false);
@@ -66,8 +61,7 @@ const ManageCategories = () => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      parent_category:
-        category.parent_category?._id || category.parent_category || "",
+      parent_category: category.parent_category?._id || "",
     });
   };
 
@@ -80,10 +74,7 @@ const ManageCategories = () => {
         toast.success("Category deleted successfully!");
         fetchCategories();
       } catch (err) {
-        console.error(
-          "Delete category error:",
-          err.response?.data || err.message
-        );
+        console.error("Delete category error:", err.response?.data || err.message);
         toast.error(err.response?.data?.message || "Failed to delete category");
       }
     }
