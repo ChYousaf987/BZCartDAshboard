@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { PulseLoader } from "react-spinners";
+import ImageUpload from "./ImageUpload";
 
 const ManageCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formFields, setFormFields] = useState({
     name: "",
     parent_category: "",
+    image: "",
   });
   const [editingCategory, setEditingCategory] = useState(null);
 
@@ -38,17 +40,17 @@ const ManageCategories = () => {
       if (editingCategory) {
         await axios.put(
           `https://bzbackend.online/api/categories/category/${editingCategory._id}`,
-          formData
+          formFields
         );
         toast.success("Category updated successfully!");
       } else {
         await axios.post(
           `https://bzbackend.online/api/categories/create-category`,
-          formData
+          formFields
         );
         toast.success("Category created successfully!");
       }
-      setFormData({ name: "", parent_category: "" });
+      setFormFields({ name: "", parent_category: "", image: "" });
       setEditingCategory(null);
       fetchCategories();
     } catch (err) {
@@ -59,9 +61,10 @@ const ManageCategories = () => {
 
   const handleEdit = (category) => {
     setEditingCategory(category);
-    setFormData({
+    setFormFields({
       name: category.name,
       parent_category: category.parent_category?._id || "",
+      image: category.image || "",
     });
   };
 
@@ -116,9 +119,9 @@ const ManageCategories = () => {
               <label className="block text-gray-700 mb-2">Category Name</label>
               <input
                 type="text"
-                value={formData.name}
+                value={formFields.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormFields({ ...formFields, name: e.target.value })
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 placeholder="Enter category name"
@@ -130,9 +133,9 @@ const ManageCategories = () => {
                 Parent Category (optional)
               </label>
               <select
-                value={formData.parent_category}
+                value={formFields.parent_category}
                 onChange={(e) =>
-                  setFormData({ ...formData, parent_category: e.target.value })
+                  setFormFields({ ...formFields, parent_category: e.target.value })
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               >
@@ -144,6 +147,21 @@ const ManageCategories = () => {
                 ))}
               </select>
             </div>
+            <ImageUpload
+              formFields={formFields}
+              setFormFields={setFormFields}
+              singleImage={true}
+            />
+            {editingCategory && editingCategory.image && (
+              <div className="mt-2">
+                <p className="text-gray-600">Current Image:</p>
+                <img
+                  src={editingCategory.image}
+                  alt="Category"
+                  className="w-32 h-32 object-cover rounded-lg mt-2"
+                />
+              </div>
+            )}
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
@@ -155,7 +173,7 @@ const ManageCategories = () => {
             <button
               onClick={() => {
                 setEditingCategory(null);
-                setFormData({ name: "", parent_category: "" });
+                setFormFields({ name: "", parent_category: "", image: "" });
               }}
               className="w-full mt-2 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition duration-300"
             >
@@ -168,20 +186,29 @@ const ManageCategories = () => {
           {categories.length === 0 ? (
             <p className="text-gray-600">No categories found.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-4">
               {categories.map((category) => (
                 <li
                   key={category._id}
                   className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                 >
-                  <span>
-                    {category.name}{" "}
-                    {category.parent_category && (
-                      <span className="text-gray-500">
-                        (Subcategory of {category.parent_category.name})
-                      </span>
+                  <div className="flex items-center gap-4">
+                    {category.image && (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
                     )}
-                  </span>
+                    <span>
+                      {category.name}{" "}
+                      {category.parent_category && (
+                        <span className="text-gray-500">
+                          (Subcategory of {category.parent_category.name})
+                        </span>
+                      )}
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(category)}

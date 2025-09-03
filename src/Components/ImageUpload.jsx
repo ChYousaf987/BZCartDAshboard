@@ -7,7 +7,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { BarLoader } from "react-spinners";
 
-export default function ImageUpload({ formFields, setFormFields }) {
+export default function ImageUpload({ formFields, setFormFields, singleImage = false }) {
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -16,13 +16,17 @@ export default function ImageUpload({ formFields, setFormFields }) {
       file,
       index: images.length + index,
     }));
-    setImages((prevImages) => [...prevImages, ...newImages]);
+    if (singleImage) {
+      setImages(newImages.slice(0, 1)); // Keep only the first image
+    } else {
+      setImages((prevImages) => [...prevImages, ...newImages]);
+    }
   };
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: { "image/*": [] },
-    multiple: true,
+    multiple: !singleImage,
   });
 
   const filterImages = (id) => {
@@ -74,12 +78,18 @@ export default function ImageUpload({ formFields, setFormFields }) {
 
     try {
       let imagesData = await Promise.all(myImages);
-      toast.success("Images uploaded successfully!");
-      // Update only the product_images field, preserving other fields
-      setFormFields((prevFields) => ({
-        ...prevFields,
-        product_images: imagesData,
-      }));
+      toast.success("Image(s) uploaded successfully!");
+      if (singleImage) {
+        setFormFields((prevFields) => ({
+          ...prevFields,
+          image: imagesData[0], // Set single image URL for categories
+        }));
+      } else {
+        setFormFields((prevFields) => ({
+          ...prevFields,
+          product_images: imagesData, // Set array of image URLs for products
+        }));
+      }
       setImages([]);
     } catch (err) {
       console.error("Batch upload failed:", err);
@@ -95,7 +105,7 @@ export default function ImageUpload({ formFields, setFormFields }) {
           variant="h6"
           className="font-bold text-gray-900 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
         >
-          Product Images
+          {singleImage ? "Category Image" : "Product Images"}
         </Typography>
         <Typography
           className="text-sm font-semibold cursor-pointer hover:text-indigo-600 transition-colors duration-200"
@@ -114,10 +124,10 @@ export default function ImageUpload({ formFields, setFormFields }) {
             <Upload className="h-6 w-6 text-indigo-600" />
           </div>
           <Typography variant="h5" className="font-semibold text-gray-700">
-            Drag and Drop Your Images Here
+            Drag and Drop Your {singleImage ? "Image" : "Images"} Here
           </Typography>
           <Typography className="text-gray-500 text-sm">
-            Select one or more images
+            Select {singleImage ? "one image" : "one or more images"}
           </Typography>
           <Button
             variant="outlined"
@@ -130,7 +140,7 @@ export default function ImageUpload({ formFields, setFormFields }) {
               fontWeight: 600,
             }}
           >
-            Browse Images
+            Browse {singleImage ? "Image" : "Images"}
           </Button>
         </div>
       </div>
@@ -184,7 +194,7 @@ export default function ImageUpload({ formFields, setFormFields }) {
               textTransform: "none",
             }}
           >
-            {imageLoading ? <BarLoader color="white" /> : "Upload Images"}
+            {imageLoading ? <BarLoader color="white" /> : "Upload Image(s)"}
           </Button>
         </div>
       )}
