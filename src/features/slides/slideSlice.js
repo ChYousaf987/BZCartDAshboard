@@ -13,7 +13,7 @@ export const createSlide = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        "http://localhost:3003/api/slides/create-slide",
+        "https://bzbackend.online/api/slides/create-slide",
         formData,
         {
           headers: {
@@ -36,7 +36,7 @@ export const fetchSlides = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "http://localhost:3003/api/slides/slides"
+        "https://bzbackend.online/api/slides/slides"
       );
       return response.data;
     } catch (error) {
@@ -55,7 +55,7 @@ export const updateSlide = createAsyncThunk(
   async ({ id, slideData }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `http://localhost:3003/api/slides/slide/${id}`,
+        `https://bzbackend.online/api/slides/slide/${id}`,
         slideData,
         {
           headers: {
@@ -77,7 +77,7 @@ export const deleteSlide = createAsyncThunk(
   "slides/deleteSlide",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`http://localhost:3003/api/slides/slide/${id}`);
+      await axios.delete(`https://bzbackend.online/api/slides/slide/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(
@@ -93,7 +93,7 @@ export const getSlideById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `http://localhost:3003/api/slides/slide/${id}`,
+        `https://bzbackend.online/api/slides/slide/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
