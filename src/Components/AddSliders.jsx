@@ -20,11 +20,11 @@ const AddSliders = () => {
     buttonText: "",
     image: null,
     link: "",
-    background: null,
+    bgColor: "#ffffff", // Default background color (white)
+    size: "medium", // Default size
   });
   const [editingSlide, setEditingSlide] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [backgroundPreview, setBackgroundPreview] = useState(null);
 
   useEffect(() => {
     dispatch(fetchSlides());
@@ -43,27 +43,15 @@ const AddSliders = () => {
       return;
     }
     setFormData((prev) => ({ ...prev, [name]: file }));
-    if (file) {
-      if (name === "image") {
-        setImagePreview(URL.createObjectURL(file));
-      } else if (name === "background") {
-        setBackgroundPreview(URL.createObjectURL(file));
-      }
-    } else {
-      if (name === "image") {
-        setImagePreview(null);
-      } else if (name === "background") {
-        setBackgroundPreview(null);
-      }
+    if (file && name === "image") {
+      setImagePreview(URL.createObjectURL(file));
+    } else if (!file && name === "image") {
+      setImagePreview(null);
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.subtitle || !formData.buttonText) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
     if (!editingSlide && !formData.image) {
       toast.error("Please select a main image");
       return;
@@ -80,10 +68,10 @@ const AddSliders = () => {
             buttonText: "",
             image: null,
             link: "",
-            background: null,
+            bgColor: "#ffffff",
+            size: "medium",
           });
           setImagePreview(null);
-          setBackgroundPreview(null);
           setEditingSlide(null);
         })
         .catch((err) => toast.error(err.message || "Failed to update slide"));
@@ -98,10 +86,10 @@ const AddSliders = () => {
             buttonText: "",
             image: null,
             link: "",
-            background: null,
+            bgColor: "#ffffff",
+            size: "medium",
           });
           setImagePreview(null);
-          setBackgroundPreview(null);
         })
         .catch((err) => toast.error(err.message || "Failed to create slide"));
     }
@@ -110,15 +98,15 @@ const AddSliders = () => {
   const handleEdit = (slide) => {
     setEditingSlide(slide);
     setFormData({
-      title: slide.title,
-      subtitle: slide.subtitle,
-      buttonText: slide.buttonText,
+      title: slide.title || "",
+      subtitle: slide.subtitle || "",
+      buttonText: slide.buttonText || "",
       image: null,
-      link: slide.link,
-      background: null,
+      link: slide.link || "",
+      bgColor: slide.bgColor || "#ffffff",
+      size: slide.size || "medium",
     });
     setImagePreview(slide.image);
-    setBackgroundPreview(slide.background);
   };
 
   const handleCancelEdit = () => {
@@ -129,10 +117,10 @@ const AddSliders = () => {
       buttonText: "",
       image: null,
       link: "",
-      background: null,
+      bgColor: "#ffffff",
+      size: "medium",
     });
     setImagePreview(null);
-    setBackgroundPreview(null);
   };
 
   const handleDelete = (id) => {
@@ -171,7 +159,7 @@ const AddSliders = () => {
         >
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
-              Title
+              Title (optional)
             </label>
             <input
               type="text"
@@ -180,12 +168,11 @@ const AddSliders = () => {
               onChange={handleInputChange}
               className="w-full p-2 border rounded-lg"
               placeholder="Enter slide title"
-              required
             />
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
-              Subtitle
+              Subtitle (optional)
             </label>
             <input
               type="text"
@@ -194,12 +181,11 @@ const AddSliders = () => {
               onChange={handleInputChange}
               className="w-full p-2 border rounded-lg"
               placeholder="Enter slide subtitle"
-              required
             />
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
-              Button Text
+              Button Text (optional)
             </label>
             <input
               type="text"
@@ -208,7 +194,6 @@ const AddSliders = () => {
               onChange={handleInputChange}
               className="w-full p-2 border rounded-lg"
               placeholder="Enter button text"
-              required
             />
           </div>
           <div className="mb-4">
@@ -233,25 +218,6 @@ const AddSliders = () => {
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
-              Background Image (optional)
-            </label>
-            <input
-              type="file"
-              name="background"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full p-2 border rounded-lg"
-            />
-            {backgroundPreview && (
-              <img
-                src={backgroundPreview}
-                alt="Background image preview"
-                className="mt-2 w-full max-w-md object-contain rounded-md"
-              />
-            )}
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">
               Link (optional)
             </label>
             <input
@@ -262,6 +228,30 @@ const AddSliders = () => {
               className="w-full p-2 border rounded-lg"
               placeholder="Enter link URL (e.g., /products)"
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">
+              Background Color
+            </label>
+            <input
+              type="color"
+              name="bgColor"
+              value={formData.bgColor}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-lg"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">Size</label>
+            <select
+              name="size"
+              value={formData.size}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-lg"
+            >
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
           </div>
           <div className="flex gap-4">
             <button
@@ -291,23 +281,27 @@ const AddSliders = () => {
               <div
                 key={slide._id}
                 className="bg-white p-4 rounded-lg shadow-md flex flex-col gap-2"
+                style={{ backgroundColor: slide.bgColor || "#ffffff" }}
               >
                 <img
                   src={slide.image}
                   alt={slide.title}
                   className="w-full max-w-md object-contain rounded-md"
                 />
-                {slide.background && (
-                  <img
-                    src={slide.background}
-                    alt="Background"
-                    className="w-full max-w-md object-contain rounded-md"
-                  />
-                )}
-                <h4 className="font-semibold">{slide.title}</h4>
-                <p className="text-gray-600">{slide.subtitle}</p>
-                <p className="text-gray-600">Button: {slide.buttonText}</p>
-                <p className="text-gray-600">Link: {slide.link}</p>
+                <h4 className="font-semibold">{slide.title || "No Title"}</h4>
+                <p className="text-gray-600">
+                  {slide.subtitle || "No Subtitle"}
+                </p>
+                <p className="text-gray-600">
+                  Button: {slide.buttonText || "No Button Text"}
+                </p>
+                <p className="text-gray-600">
+                  Link: {slide.link || "/products"}
+                </p>
+                <p className="text-gray-600">Size: {slide.size}</p>
+                <p className="text-gray-600">
+                  Background Color: {slide.bgColor || "Default (White)"}
+                </p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(slide)}

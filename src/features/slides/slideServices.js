@@ -1,4 +1,4 @@
-const BASE_URL = "https://bzbackend.online/api/slides";
+const BASE_URL = "http://localhost:3003/api/slides";
 
 export const createSlide = async (slideData) => {
   const formData = new FormData();
@@ -7,7 +7,8 @@ export const createSlide = async (slideData) => {
   formData.append("buttonText", slideData.buttonText);
   formData.append("image", slideData.image); // Required main image
   if (slideData.link) formData.append("link", slideData.link);
-  if (slideData.background) formData.append("background", slideData.background); // Optional background image
+  formData.append("bgColor", slideData.bgColor); // Background color
+  if (slideData.size) formData.append("size", slideData.size); // Optional size field
 
   const response = await fetch(`${BASE_URL}/create-slide`, {
     method: "POST",
@@ -52,7 +53,8 @@ export const updateSlide = async (id, slideData) => {
   if (slideData.buttonText) formData.append("buttonText", slideData.buttonText);
   if (slideData.image) formData.append("image", slideData.image); // Optional for updates
   if (slideData.link) formData.append("link", slideData.link);
-  if (slideData.background) formData.append("background", slideData.background); // Optional background image
+  if (slideData.bgColor) formData.append("bgColor", slideData.bgColor); // Background color
+  if (slideData.size) formData.append("size", slideData.size); // Optional size field
 
   const response = await fetch(`${BASE_URL}/slide/${id}`, {
     method: "PUT",
