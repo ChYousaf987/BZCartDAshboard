@@ -35,7 +35,7 @@ const EditProduct = () => {
     loading,
     error: apiError,
   } = useSelector((state) => state.products);
-  const [formData, setFormData] = useState(null); // Initialize as null to prevent premature rendering
+  const [formData, setFormData] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
@@ -54,7 +54,6 @@ const EditProduct = () => {
   }
 
   useEffect(() => {
-    // Fetch categories
     const fetchCategories = async () => {
       try {
         setCategoryLoading(true);
@@ -82,7 +81,6 @@ const EditProduct = () => {
       }
     };
 
-    // Fetch product
     dispatch(fetchProductById(id));
     fetchCategories();
   }, [dispatch, id]);
@@ -104,6 +102,7 @@ const EditProduct = () => {
         brand_name: product.brand_name || "",
         product_code: product.product_code || "",
         rating: product.rating || 4,
+        bg_color: product.bg_color || "#FFFFFF", // Initialize with product bg_color
       });
     }
   }, [product, id, formData]);
@@ -118,7 +117,6 @@ const EditProduct = () => {
 
     setError(null);
 
-    // Validate required fields
     if (!formData.product_name) {
       setError("Product name is required.");
       toast.error("Product name is required.");
@@ -165,6 +163,11 @@ const EditProduct = () => {
       toast.error("Category is not defined.");
       return;
     }
+    if (formData.bg_color && !/^#[0-9A-F]{6}$/i.test(formData.bg_color)) {
+      setError("Background color must be a valid hex code (e.g., #FFFFFF).");
+      toast.error("Background color must be a valid hex code (e.g., #FFFFFF).");
+      return;
+    }
 
     try {
       await dispatch(
@@ -175,6 +178,7 @@ const EditProduct = () => {
             product_base_price: basePrice,
             product_discounted_price: discountedPrice,
             product_stock: stock,
+            bg_color: formData.bg_color || "#FFFFFF",
           },
         })
       ).unwrap();
@@ -329,7 +333,7 @@ const EditProduct = () => {
           />
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">Categorynine</label>
+          <label className="block text-gray-700 mb-2">Category</label>
           <Select
             name="category"
             options={categoryOptions}
@@ -369,6 +373,28 @@ const EditProduct = () => {
         </div>
         <div>
           <label className="block text-gray-700 mb-2">
+            Background Color (optional)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              name="bg_color"
+              value={formData.bg_color}
+              onChange={handleChange}
+              className="w-12 h-12 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              name="bg_color"
+              placeholder="#FFFFFF"
+              value={formData.bg_color}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">
             Product Description
           </label>
           <textarea
@@ -377,7 +403,6 @@ const EditProduct = () => {
             value={formData.product_description}
             onChange={handleChange}
             rows={5}
-            Circles
             className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
         </div>

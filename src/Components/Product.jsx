@@ -57,7 +57,6 @@ const Product = () => {
   }
 
   useEffect(() => {
-    // Fetch categories
     setCategoryLoading(true);
     axios
       .get("https://bzbackend.online/api/categories/categories")
@@ -83,7 +82,6 @@ const Product = () => {
         setCategoryLoading(false);
       });
 
-    // Fetch products
     dispatch(fetchProducts());
   }, [dispatch]);
 
@@ -118,7 +116,6 @@ const Product = () => {
     selectedCategory.value === "all"
       ? products
       : products.filter((item) => {
-          // Handle populated and non-populated category fields
           const categoryId = item.category?._id
             ? item.category._id.toString()
             : item.category?.toString();
@@ -187,6 +184,7 @@ const Product = () => {
               <div
                 key={item._id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300"
+                style={{ backgroundColor: item.bg_color || "#FFFFFF" }}
               >
                 <div className="h-48 w-full border rounded-t-xl overflow-hidden relative">
                   <img
@@ -247,6 +245,16 @@ const Product = () => {
                       </span>
                     </div>
                   )}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-gray-500">Background Color:</span>
+                    <span className="text-gray-800">
+                      {item.bg_color || "N/A"}
+                    </span>
+                    <div
+                      className="w-6 h-6 rounded-full border border-gray-300"
+                      style={{ backgroundColor: item.bg_color || "#FFFFFF" }}
+                    ></div>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => handleEdit(item._id)}

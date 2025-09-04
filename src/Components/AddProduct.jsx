@@ -41,12 +41,13 @@ const AddProduct = () => {
     brand_name: "",
     product_code: "",
     rating: 4,
+    bg_color: "#FFFFFF", // Initialize with default color
   });
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
-  const [imageUploading, setImageUploading] = useState(false); // Track image upload status
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser") || "{}");
@@ -92,7 +93,6 @@ const AddProduct = () => {
     e.preventDefault();
     setError(null);
 
-    // Prevent submission if categories or images are still loading
     if (categoryLoading) {
       setError("Categories are still loading. Please wait.");
       toast.error("Categories are still loading. Please wait.");
@@ -120,14 +120,12 @@ const AddProduct = () => {
       toast.error("Product code is required.");
       return;
     }
-
     const stock = Number(formData.product_stock);
     if (isNaN(stock) || stock < 0) {
       setError("Stock must be a non-negative number.");
       toast.error("Stock must be a non-negative number.");
       return;
     }
-
     const basePrice = Number(formData.product_base_price);
     const discountedPrice = Number(formData.product_discounted_price);
     if (isNaN(basePrice) || basePrice <= 0) {
@@ -145,7 +143,6 @@ const AddProduct = () => {
       toast.error("Discounted price cannot be higher than base price.");
       return;
     }
-
     if (
       !formData.category ||
       !categories.find((cat) => cat._id === formData.category)
@@ -154,8 +151,12 @@ const AddProduct = () => {
       toast.error("Please select a valid category.");
       return;
     }
-
-    // Note: product_images is optional, so no validation is added for it
+    // Validate bg_color
+    if (formData.bg_color && !/^#[0-9A-F]{6}$/i.test(formData.bg_color)) {
+      setError("Background color must be a valid hex code (e.g., #FFFFFF).");
+      toast.error("Background color must be a valid hex code (e.g., #FFFFFF).");
+      return;
+    }
 
     try {
       await dispatch(
@@ -164,6 +165,7 @@ const AddProduct = () => {
           product_base_price: basePrice,
           product_discounted_price: discountedPrice,
           product_stock: stock,
+          bg_color: formData.bg_color || "#FFFFFF", // Ensure bg_color is sent
         })
       ).unwrap();
       toast.success("Product created successfully!");
@@ -179,6 +181,7 @@ const AddProduct = () => {
         brand_name: "",
         product_code: "",
         rating: 4,
+        bg_color: "#FFFFFF",
       });
       navigate("/product");
     } catch (err) {
@@ -198,7 +201,7 @@ const AddProduct = () => {
     setFormData((prev) => ({
       ...prev,
       category: selectedOption ? selectedOption.value : "",
-      subcategories: [], // Reset subcategories when category changes
+      subcategories: [],
     }));
     setError(null);
   };
@@ -252,66 +255,86 @@ const AddProduct = () => {
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Add New Product</h2>
       {error && <div className="text-red-600 mb-4">{error}</div>}
       <form className="space-y-5" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="product_name"
-          placeholder="Product Title"
-          value={formData.product_name}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <input
-          type="text"
-          name="brand_name"
-          placeholder="Brand Name"
-          value={formData.brand_name}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <input
-          type="text"
-          name="product_code"
-          placeholder="Product Code"
-          value={formData.product_code}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <input
-          type="number"
-          name="product_base_price"
-          placeholder="Base Price (Rs.)"
-          value={formData.product_base_price}
-          onChange={handleChange}
-          required
-          min="0"
-          step="0.01"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <input
-          type="number"
-          name="product_discounted_price"
-          placeholder="Discounted Price (Rs.)"
-          value={formData.product_discounted_price}
-          onChange={handleChange}
-          required
-          min="0"
-          step="0.01"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <input
-          type="number"
-          name="product_stock"
-          placeholder="Stock Quantity"
-          value={formData.product_stock}
-          onChange={handleChange}
-          required
-          min="0"
-          step="1"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
+        <div>
+          <label className="block text-gray-700 mb-2">Product Name</label>
+          <input
+            type="text"
+            name="product_name"
+            placeholder="Product Title"
+            value={formData.product_name}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Brand Name</label>
+          <input
+            type="text"
+            name="brand_name"
+            placeholder="Brand Name"
+            value={formData.brand_name}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Product Code</label>
+          <input
+            type="text"
+            name="product_code"
+            placeholder="Product Code"
+            value={formData.product_code}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Base Price (Rs.)</label>
+          <input
+            type="number"
+            name="product_base_price"
+            placeholder="Base Price (Rs.)"
+            value={formData.product_base_price}
+            onChange={handleChange}
+            required
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">
+            Discounted Price (Rs.)
+          </label>
+          <input
+            type="number"
+            name="product_discounted_price"
+            placeholder="Discounted Price (Rs.)"
+            value={formData.product_discounted_price}
+            onChange={handleChange}
+            required
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Stock Quantity</label>
+          <input
+            type="number"
+            name="product_stock"
+            placeholder="Stock Quantity"
+            value={formData.product_stock}
+            onChange={handleChange}
+            required
+            min="0"
+            step="1"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
         <div>
           <label className="block text-gray-700 mb-2">Category</label>
           <Select
@@ -353,17 +376,44 @@ const AddProduct = () => {
           <ImageUpload
             formFields={formData}
             setFormFields={setFormData}
-            setImageUploading={setImageUploading} // Pass callback to track image upload status
+            setImageUploading={setImageUploading}
           />
         </div>
-        <textarea
-          name="product_description"
-          placeholder="Product Description"
-          value={formData.product_description}
-          onChange={handleChange}
-          rows={5}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        ></textarea>
+        <div>
+          <label className="block text-gray-700 mb-2">
+            Background Color (optional)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              name="bg_color"
+              value={formData.bg_color}
+              onChange={handleChange}
+              className="w-12 h-12 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              name="bg_color"
+              placeholder="#FFFFFF"
+              value={formData.bg_color}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">
+            Product Description
+          </label>
+          <textarea
+            name="product_description"
+            placeholder="Product Description"
+            value={formData.product_description}
+            onChange={handleChange}
+            rows={5}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          ></textarea>
+        </div>
         <button
           type="submit"
           disabled={categoryLoading || imageUploading}
