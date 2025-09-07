@@ -1,11 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("myUser"));
+  const newOrdersCount = useSelector((state) => state.orders.newOrders.length); // Get new orders count
 
   const linkClasses = (path) =>
     `px-4 py-3 rounded-lg transition-all duration-300 font-medium text-lg ${
@@ -42,19 +44,28 @@ const Sidebar = () => {
                 <Link to="/add-slider" className={linkClasses("/add-slider")}>
                   🖼️ Add Slider
                 </Link>
-                
                 <Link
                   to="/manage-categories"
                   className={linkClasses("/manage-categories")}
                 >
                   🗂️ Manage Categories
                 </Link>
+                <Link to="/reels" className={linkClasses("/reels")}>
+                  📽 Reels
+                </Link>
               </>
             )}
             {["superadmin", "team"].includes(user?.role) && (
-              <Link to="/orders" className={linkClasses("/orders")}>
-                🛒 Orders
-              </Link>
+              <div className="relative">
+                <Link to="/orders" className={linkClasses("/orders")}>
+                  🛒 Orders
+                </Link>
+                {newOrdersCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {newOrdersCount}
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <button

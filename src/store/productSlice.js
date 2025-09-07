@@ -117,6 +117,24 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
+export const fetchCart = createAsyncThunk(
+  "cart/fetchCart",
+  async ({ guestId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `https://bzbackend.online/api/products/cart?guestId=${guestId}`,
+        { timeout: 5000 }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("fetchCart error:", err.response?.data || err.message);
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch cart"
+      );
+    }
+  }
+);
+
 export const updateProduct = createAsyncThunk(
   "products/updateProduct",
   async ({ id, productData }, { rejectWithValue }) => {
@@ -151,6 +169,18 @@ const productSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(createProduct.pending, (state) => {
         state.loading = true;
         state.error = null;

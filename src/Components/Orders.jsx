@@ -1,32 +1,76 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrders, updateOrderStatus, deleteOrder } from "../features/order/orderSlice";
+import {
+  fetchOrders,
+  fetchNewOrders,
+  updateOrderStatus,
+  deleteOrder,
+  resetNewOrders,
+} from "../features/order/orderSlice";
 import { PulseLoader } from "react-spinners";
 import { toast, Toaster } from "react-hot-toast";
 
 const Orders = () => {
   const dispatch = useDispatch();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("myUser")) || null, []);
-  const { orders, loading, error } = useSelector((state) => state.orders);
+  const user = useMemo(
+    () => JSON.parse(localStorage.getItem("myUser")) || null,
+    []
+  );
+  const { orders, newOrders, loading, error, lastCheck } = useSelector(
+    (state) => state.orders
+  );
   const [statusUpdating, setStatusUpdating] = useState({});
   const [deleting, setDeleting] = useState({});
 
+  // Polling for new orders every 30 seconds
   useEffect(() => {
-    console.log("Current user:", user);
-    if (["superadmin", "admin", "team"].includes(user?.role) && !loading && !orders.length) {
+    const interval = setInterval(() => {
+      if (["superadmin", "admin", "team"].includes(user?.role)) {
+        dispatch(fetchNewOrders(lastCheck));
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [dispatch, user, lastCheck]);
+
+  // Fetch initial orders and reset new orders when visiting the page
+  useEffect(() => {
+    if (
+      ["superadmin", "admin", "team"].includes(user?.role) &&
+      !loading &&
+      !orders.length
+    ) {
       dispatch(fetchOrders());
     }
+    // Reset new orders count when visiting the Orders page
+    dispatch(resetNewOrders());
   }, [dispatch, user, loading, orders.length]);
+
+  // Show toast notifications for new orders
+  useEffect(() => {
+    if (newOrders.length > 0) {
+      newOrders.forEach((order) => {
+        toast.success(
+          `New order received from ${order.full_name || order.order_email}!`,
+          {
+            duration: 5000,
+          }
+        );
+      });
+    }
+  }, [newOrders]);
 
   useEffect(() => {
     console.log("Orders data:", orders);
-  }, [orders]);
+    console.log("New orders:", newOrders);
+  }, [orders, newOrders]);
 
   const handleStatusChange = async (orderId, newStatus) => {
-    console.log("Status updating for order:", orderId, "to:", newStatus, "current state:", statusUpdating);
     setStatusUpdating((prev) => ({ ...prev, [orderId]: true }));
     try {
-      await dispatch(updateOrderStatus({ id: orderId, status: newStatus })).unwrap();
+      await dispatch(
+        updateOrderStatus({ id: orderId, status: newStatus })
+      ).unwrap();
       toast.success("Order status updated successfully!");
     } catch (err) {
       console.error("Status update error:", err);
@@ -39,7 +83,6 @@ const Orders = () => {
   };
 
   const handleDeleteOrder = async (orderId) => {
-    console.log("Deleting order:", orderId, "current state:", deleting);
     setDeleting((prev) => ({ ...prev, [orderId]: true }));
     try {
       await dispatch(deleteOrder(orderId)).unwrap();
@@ -72,8 +115,12 @@ const Orders = () => {
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 className="text-2xl font-semibold text-gray-800">Access Denied</h3>
-          <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
+          <h3 className="text-2xl font-semibold text-gray-800">
+            Access Denied
+          </h3>
+          <p className="text-gray-600 mt-2">
+            You do not have permission to view this page.
+          </p>
         </div>
       </div>
     );
@@ -121,7 +168,11 @@ const Orders = () => {
       phone_number: "+12345678901",
       products: [
         {
-          product_id: { _id: "prod1", product_name: "Gold Necklace", brand_name: "JewelCo" },
+          product_id: {
+            _id: "prod1",
+            product_name: "Gold Necklace",
+            brand_name: "JewelCo",
+          },
           quantity: 1,
           selected_image: "https://placehold.co/150x150",
         },
@@ -140,7 +191,11 @@ const Orders = () => {
       phone_number: "+19876543210",
       products: [
         {
-          product_id: { _id: "prod2", product_name: "Silver Ring", brand_name: "JewelCo" },
+          product_id: {
+            _id: "prod2",
+            product_name: "Silver Ring",
+            brand_name: "JewelCo",
+          },
           quantity: 2,
           selected_image: "https://placehold.co/150x150",
         },
@@ -153,7 +208,8 @@ const Orders = () => {
     },
   ];
 
-  const displayOrders = orders && orders.length > 0 ? orders : dummyOrders;
+  const displayOrders =
+    orders && orders.length > 0 ? [...newOrders, ...orders] : dummyOrders;
 
   if (!displayOrders || displayOrders.length === 0) {
     return (
@@ -173,7 +229,9 @@ const Orders = () => {
               d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
             />
           </svg>
-          <h3 className="text-2xl font-semibold text-gray-800">No Orders Found</h3>
+          <h3 className="text-2xl font-semibold text-gray-800">
+            No Orders Found
+          </h3>
           <p className="text-gray-600 mt-2">No completed orders available.</p>
         </div>
       </div>
@@ -202,9 +260,16 @@ const Orders = () => {
       <Toaster position="top-right" />
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Orders Management</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Orders Management
+          </h2>
           <div className="text-sm text-gray-500">
-            Total Orders: {displayOrders.filter((order) => order.payment_status === "completed").length}
+            Total Orders:{" "}
+            {
+              displayOrders.filter(
+                (order) => order.payment_status === "completed"
+              ).length
+            }
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md overflow-x-auto">
@@ -213,14 +278,24 @@ const Orders = () => {
               <tr>
                 <th className="px-4 py-3 min-w-[60px]">Image</th>
                 <th className="px-4 py-3 min-w-[150px]">Ordered By</th>
-                <th className="px-4 py-3 min-w-[120px] hidden sm:table-cell">Phone</th>
-                <th className="px-4 py-3 min-w-[100px] hidden md:table-cell">Company</th>
+                <th className="px-4 py-3 min-w-[120px] hidden sm:table-cell">
+                  Phone
+                </th>
+                <th className="px-4 py-3 min-w-[100px] hidden md:table-cell">
+                  Company
+                </th>
                 <th className="px-4 py-3 min-w-[180px]">Products</th>
                 <th className="px-4 py-3 min-w-[80px]">Total</th>
                 <th className="px-4 py-3 min-w-[140px]">Status</th>
-                <th className="px-4 py-3 min-w-[100px] hidden lg:table-cell">Payment</th>
-                <th className="px-4 py-3 min-w-[150px] hidden xl:table-cell">Address</th>
-                <th className="px-4 py-3 min-w-[100px] hidden lg:table-cell">Date</th>
+                <th className="px-4 py-3 min-w-[100px] hidden lg:table-cell">
+                  Payment
+                </th>
+                <th className="px-4 py-3 min-w-[150px] hidden xl:table-cell">
+                  Address
+                </th>
+                <th className="px-4 py-3 min-w-[100px] hidden lg:table-cell">
+                  Date
+                </th>
                 <th className="px-4 py-3 min-w-[120px]">Actions</th>
               </tr>
             </thead>
@@ -230,13 +305,18 @@ const Orders = () => {
                 .map((order, index) => (
                   <tr
                     key={order._id}
-                    className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 transition-colors`}
+                    className={`border-b ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-gray-100 transition-colors`}
                   >
                     <td className="px-4 py-3">
                       {order.products[0]?.selected_image ? (
                         <img
                           src={order.products[0].selected_image}
-                          alt={order.products[0].product_id?.product_name || "Product"}
+                          alt={
+                            order.products[0].product_id?.product_name ||
+                            "Product"
+                          }
                           className="w-10 h-10 object-cover rounded-md border border-gray-200"
                           onError={(e) => {
                             console.error(
@@ -269,7 +349,10 @@ const Orders = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-normal">
                       {order.products.map((item) => (
-                        <div key={item.product_id?._id || item.product_id} className="text-xs">
+                        <div
+                          key={item.product_id?._id || item.product_id}
+                          className="text-xs"
+                        >
                           <span className="font-medium">
                             {item.product_id?.product_name || "Unknown Product"}
                           </span>{" "}
@@ -283,7 +366,9 @@ const Orders = () => {
                     <td className="px-4 py-3">
                       <select
                         value={order.status || "pending"}
-                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                        onChange={(e) =>
+                          handleStatusChange(order._id, e.target.value)
+                        }
                         disabled={statusUpdating[order._id]}
                         className={`border rounded-md px-2 py-1 text-xs font-medium w-full ${getStatusStyles(
                           order.status
@@ -307,13 +392,15 @@ const Orders = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      {order.createdAt
-                        ? new Date(order.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : <span className="text-gray-500">No date</span>}
+                      {order.createdAt ? (
+                        new Date(order.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      ) : (
+                        <span className="text-gray-500">No date</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

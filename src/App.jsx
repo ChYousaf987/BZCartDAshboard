@@ -18,6 +18,7 @@ import ManageCategories from "./Components/ManageCategories.jsx";
 import AddBrands from "./Components/AddBrands.jsx";
 import ManageBrands from "./Components/ManageBrands.jsx";
 import { Toaster } from "react-hot-toast";
+import Reels from "./Components/Reels.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -103,6 +104,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <PendingUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reels"
+          element={
+            <ProtectedRoute>
+              <Reels />
             </ProtectedRoute>
           }
         />

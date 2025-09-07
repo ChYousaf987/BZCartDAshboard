@@ -18,11 +18,17 @@ export const createSlide = createAsyncThunk(
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+      console.log("Create slide response:", response.data); // Debug: Log response
       return response.data;
     } catch (error) {
+      console.error(
+        "Create slide error:",
+        error.response?.data || error.message
+      ); // Debug: Log error
       return rejectWithValue(
         error.response?.data?.message || "Failed to create slide"
       );
@@ -36,10 +42,20 @@ export const fetchSlides = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "https://bzbackend.online/api/slides/slides"
+        "https://bzbackend.online/api/slides/slides",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
+      console.log("Fetch slides response:", response.data); // Debug: Log response
       return response.data;
     } catch (error) {
+      console.error(
+        "Fetch slides error:",
+        error.response?.data || error.message
+      ); // Debug: Log error
       return rejectWithValue(
         error.response?.status === 404
           ? "Slides endpoint not found. Please check the server configuration."
@@ -60,11 +76,17 @@ export const updateSlide = createAsyncThunk(
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+      console.log("Update slide response:", response.data); // Debug: Log response
       return response.data;
     } catch (error) {
+      console.error(
+        "Update slide error:",
+        error.response?.data || error.message
+      ); // Debug: Log error
       return rejectWithValue(
         error.response?.data?.message || "Failed to update slide"
       );
@@ -77,9 +99,17 @@ export const deleteSlide = createAsyncThunk(
   "slides/deleteSlide",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`https://bzbackend.online/api/slides/slide/${id}`);
+      await axios.delete(`https://bzbackend.online/api/slides/slide/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       return id;
     } catch (error) {
+      console.error(
+        "Delete slide error:",
+        error.response?.data || error.message
+      ); // Debug: Log error
       return rejectWithValue(
         error.response?.data?.message || "Failed to delete slide"
       );
@@ -87,7 +117,7 @@ export const deleteSlide = createAsyncThunk(
   }
 );
 
-// Optional: Fetch a single slide by ID (if needed in the future)
+// Fetch a single slide by ID
 export const getSlideById = createAsyncThunk(
   "slides/getSlideById",
   async (id, { rejectWithValue }) => {
@@ -100,8 +130,13 @@ export const getSlideById = createAsyncThunk(
           },
         }
       );
+      console.log("Get slide by ID response:", response.data); // Debug: Log response
       return response.data;
     } catch (error) {
+      console.error(
+        "Get slide by ID error:",
+        error.response?.data || error.message
+      ); // Debug: Log error
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch slide"
       );

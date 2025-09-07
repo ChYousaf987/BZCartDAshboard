@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProducts, deleteProduct } from "../store/productSlice";
+import { fetchProducts, deleteProduct, fetchCart } from "../store/productSlice";
+// import { fetchCart } from "../features/cart/cartSlice"; // Import fetchCart
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import Select from "react-select";
@@ -46,6 +47,7 @@ const Product = () => {
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser"));
+  const guestId = localStorage.getItem("guestId");
   if (!user || !["superadmin", "admin"].includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -91,6 +93,10 @@ const Product = () => {
         .unwrap()
         .then(() => {
           toast.success("Product deleted successfully!");
+          // Refetch cart to reflect removal of deleted product
+          if (guestId) {
+            dispatch(fetchCart({ guestId }));
+          }
         })
         .catch((err) => {
           toast.error(err || "Failed to delete product");
