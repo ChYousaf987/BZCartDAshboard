@@ -19,6 +19,10 @@ import AddBrands from "./Components/AddBrands.jsx";
 import ManageBrands from "./Components/ManageBrands.jsx";
 import { Toaster } from "react-hot-toast";
 import Reels from "./Components/Reels.jsx";
+import AllUser from "./Components/AllUser.jsx";
+import Deals from "./Components/Deals.jsx"; // Add this line
+import AddDeal from "./Components/AddDeal.jsx"; // Add this line
+import EditDeal from "./Components/EditDeal.jsx"; // Add this line
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -116,6 +120,14 @@ const App = () => {
           }
         />
         <Route
+          path="/AllUser"
+          element={
+            <ProtectedRoute>
+              <AllUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/manage-categories"
           element={
             <ProtectedRoute>
@@ -144,6 +156,30 @@ const App = () => {
           element={
             <ProtectedRoute>
               <div>Reports Page (Superadmin Only)</div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/deals"
+          element={
+            <ProtectedRoute>
+              <Deals />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-deal"
+          element={
+            <ProtectedRoute>
+              <AddDeal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-deal/:id"
+          element={
+            <ProtectedRoute>
+              <EditDeal />
             </ProtectedRoute>
           }
         />

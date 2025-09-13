@@ -7,7 +7,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("myUser"));
-  const newOrdersCount = useSelector((state) => state.orders.newOrders.length); // Get new orders count
+  const newOrdersCount = useSelector((state) => state.orders.newOrders.length);
 
   const linkClasses = (path) =>
     `px-4 py-3 rounded-lg transition-all duration-300 font-medium text-lg ${
@@ -26,7 +26,7 @@ const Sidebar = () => {
       <div>
         <div className="flex justify-center mb-6 -mt-5">
           <img
-            src="/logos.png"
+            src="/logg.png"
             alt="Logo"
             className="h-20 w-auto object-contain"
           />
@@ -52,6 +52,12 @@ const Sidebar = () => {
                 </Link>
                 <Link to="/reels" className={linkClasses("/reels")}>
                   📽 Reels
+                </Link>
+                <Link to="/AllUser" className={linkClasses("/AllUser")}>
+                  👤 All User
+                </Link>
+                <Link to="/deals" className={linkClasses("/deals")}>
+                  🎉 Deals
                 </Link>
               </>
             )}

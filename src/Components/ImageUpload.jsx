@@ -7,7 +7,12 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { BarLoader } from "react-spinners";
 
-export default function ImageUpload({ formFields, setFormFields, singleImage = false }) {
+export default function ImageUpload({
+  formFields,
+  setFormFields,
+  singleImage = false,
+  setImageUploading,
+}) {
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -17,7 +22,7 @@ export default function ImageUpload({ formFields, setFormFields, singleImage = f
       index: images.length + index,
     }));
     if (singleImage) {
-      setImages(newImages.slice(0, 1)); // Keep only the first image
+      setImages(newImages.slice(0, 1));
     } else {
       setImages((prevImages) => [...prevImages, ...newImages]);
     }
@@ -41,6 +46,7 @@ export default function ImageUpload({ formFields, setFormFields, singleImage = f
     }
 
     setImageLoading(true);
+    setImageUploading(true);
 
     let myImages = images.map(async (item) => {
       try {
@@ -79,22 +85,17 @@ export default function ImageUpload({ formFields, setFormFields, singleImage = f
     try {
       let imagesData = await Promise.all(myImages);
       toast.success("Image(s) uploaded successfully!");
-      if (singleImage) {
-        setFormFields((prevFields) => ({
-          ...prevFields,
-          image: imagesData[0], // Set single image URL for categories
-        }));
-      } else {
-        setFormFields((prevFields) => ({
-          ...prevFields,
-          product_images: imagesData, // Set array of image URLs for products
-        }));
-      }
+      const fieldName = singleImage ? "image" : "deal_images"; // Use deal_images for deals
+      setFormFields((prevFields) => ({
+        ...prevFields,
+        [fieldName]: singleImage ? imagesData[0] : imagesData,
+      }));
       setImages([]);
     } catch (err) {
       console.error("Batch upload failed:", err);
     } finally {
       setImageLoading(false);
+      setImageUploading(false);
     }
   };
 
@@ -105,7 +106,7 @@ export default function ImageUpload({ formFields, setFormFields, singleImage = f
           variant="h6"
           className="font-bold text-gray-900 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
         >
-          {singleImage ? "Category Image" : "Product Images"}
+          {singleImage ? "Category Image" : "Deal Images"}
         </Typography>
         <Typography
           className="text-sm font-semibold cursor-pointer hover:text-indigo-600 transition-colors duration-200"
@@ -201,3 +202,4 @@ export default function ImageUpload({ formFields, setFormFields, singleImage = f
     </div>
   );
 }
+  
