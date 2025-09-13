@@ -9,7 +9,7 @@ const AllUser = () => {
     const fetchUsers = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3003/api/users/all-users",
+          "https://bzbackend.online/api/users/all-users",
           {
             method: "GET",
             headers: {
