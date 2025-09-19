@@ -40,6 +40,7 @@ const EditProduct = () => {
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false); // Add state for image uploading
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser") || "{}");
@@ -102,7 +103,7 @@ const EditProduct = () => {
         brand_name: product.brand_name || "",
         product_code: product.product_code || "",
         rating: product.rating || 4,
-        bg_color: product.bg_color || "#FFFFFF", // Initialize with product bg_color
+        bg_color: product.bg_color || "#FFFFFF",
       });
     }
   }, [product, id, formData]);
@@ -112,6 +113,12 @@ const EditProduct = () => {
     if (!formData) {
       setError("Product data is still loading.");
       toast.error("Product data is still loading.");
+      return;
+    }
+
+    if (imageUploading) {
+      setError("Images are still uploading. Please wait.");
+      toast.error("Images are still uploading. Please wait.");
       return;
     }
 
@@ -346,6 +353,7 @@ const EditProduct = () => {
             isClearable
             placeholder="Select Category"
             isLoading={categoryLoading}
+            isDisabled={categoryLoading || imageUploading} // Disable if images are uploading
           />
         </div>
         <div>
@@ -362,14 +370,19 @@ const EditProduct = () => {
               formData.subcategories.includes(opt.value)
             )}
             onChange={handleSubcategoryChange}
-            isDisabled={!formData.category}
+            isDisabled={!formData.category || categoryLoading || imageUploading} // Disable if images are uploading
             placeholder="Select Subcategories"
             isLoading={categoryLoading}
           />
         </div>
         <div>
           <label className="block text-gray-700 mb-2">Images</label>
-          <ImageUpload formFields={formData} setFormFields={setFormData} />
+          <ImageUpload
+            formFields={formData}
+            setFormFields={setFormData}
+            fieldName="product_images" // Specify the correct field name
+            setImageUploading={setImageUploading}
+          />
         </div>
         <div>
           <label className="block text-gray-700 mb-2">
@@ -408,10 +421,10 @@ const EditProduct = () => {
         </div>
         <button
           type="submit"
-          disabled={loading || !formData}
+          disabled={loading || imageUploading} // Disable button if images are uploading
           className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Updating..." : "Update Product"}
+          {loading || imageUploading ? "Updating..." : "Update Product"}
         </button>
       </form>
     </div>

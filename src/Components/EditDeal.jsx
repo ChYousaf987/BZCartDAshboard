@@ -282,6 +282,7 @@ const EditDeal = () => {
           <ImageUpload
             formFields={formData}
             setFormFields={setFormData}
+            fieldName="deal_images" // Specify the correct field name
             setImageUploading={setImageUploading}
           />
         </div>

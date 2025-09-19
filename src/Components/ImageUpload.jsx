@@ -10,6 +10,7 @@ import { BarLoader } from "react-spinners";
 export default function ImageUpload({
   formFields,
   setFormFields,
+  fieldName = "images", // Default field name
   singleImage = false,
   setImageUploading,
 }) {
@@ -85,7 +86,6 @@ export default function ImageUpload({
     try {
       let imagesData = await Promise.all(myImages);
       toast.success("Image(s) uploaded successfully!");
-      const fieldName = singleImage ? "image" : "deal_images"; // Use deal_images for deals
       setFormFields((prevFields) => ({
         ...prevFields,
         [fieldName]: singleImage ? imagesData[0] : imagesData,
@@ -106,7 +106,12 @@ export default function ImageUpload({
           variant="h6"
           className="font-bold text-gray-900 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
         >
-          {singleImage ? "Category Image" : "Deal Images"}
+          {singleImage
+            ? "Category Image"
+            : `${fieldName
+                .replace("_", " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}`}{" "}
+          {/* Dynamic title */}
         </Typography>
         <Typography
           className="text-sm font-semibold cursor-pointer hover:text-indigo-600 transition-colors duration-200"
@@ -202,4 +207,3 @@ export default function ImageUpload({
     </div>
   );
 }
-  

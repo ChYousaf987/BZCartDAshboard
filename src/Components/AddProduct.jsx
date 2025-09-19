@@ -376,6 +376,7 @@ const AddProduct = () => {
           <ImageUpload
             formFields={formData}
             setFormFields={setFormData}
+            fieldName="product_images" // Specify the correct field name
             setImageUploading={setImageUploading}
           />
         </div>
