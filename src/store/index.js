@@ -3,7 +3,6 @@ import productReducer from "./productSlice";
 import userReducer from "../store/userSlice";
 import slideReducer from "../features/slides/slideSlice";
 import orderReducer from "../features/order/orderSlice";
-import brandReducer from "../features/brands/brandSlice";
 import dealReducer from "./dealSlice"; // Add this line
 
 
@@ -13,7 +12,6 @@ export const store = configureStore({
     users: userReducer,
     slides: slideReducer,
     orders: orderReducer,
-    brands: brandReducer,
     deals: dealReducer, // Add this line
   },
 });

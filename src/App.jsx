@@ -15,8 +15,6 @@ import AddSliders from "./Components/AddSliders.jsx";
 import Orders from "./Components/Orders.jsx";
 import PendingUsers from "./Components/PendingUsers.jsx";
 import ManageCategories from "./Components/ManageCategories.jsx";
-import AddBrands from "./Components/AddBrands.jsx";
-import ManageBrands from "./Components/ManageBrands.jsx";
 import { Toaster } from "react-hot-toast";
 import Reels from "./Components/Reels.jsx";
 import AllUser from "./Components/AllUser.jsx";
@@ -71,14 +69,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/manage-brands"
-          element={
-            <ProtectedRoute>
-              <ManageBrands />
-            </ProtectedRoute>
-          }
-        />
+        
         <Route
           path="/edit-product/:id"
           element={
@@ -135,14 +126,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/add-brands"
-          element={
-            <ProtectedRoute>
-              <AddBrands />
-            </ProtectedRoute>
-          }
-        />
+       
         <Route
           path="/messages"
           element={
