@@ -41,13 +41,26 @@ const AddProduct = () => {
     brand_name: "",
     product_code: "",
     rating: 4,
-    bg_color: "#FFFFFF", // Initialize with default color
+    bg_color: "#FFFFFF",
+    shipping: "0",
+    payment: ["Cash on Delivery"],
+    isNewArrival: false,
+    isBestSeller: false,
   });
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
+
+  // Available payment methods
+  const paymentOptions = [
+    { value: "Cash on Delivery", label: "Cash on Delivery" },
+    { value: "Credit Card", label: "Credit Card" },
+    { value: "Debit Card", label: "Debit Card" },
+    { value: "PayPal", label: "PayPal" },
+    { value: "Bank Transfer", label: "Bank Transfer" },
+  ];
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser") || "{}");
@@ -151,7 +164,17 @@ const AddProduct = () => {
       toast.error("Please select a valid category.");
       return;
     }
-    // Validate bg_color
+    const shippingCost = Number(formData.shipping);
+    if (isNaN(shippingCost) || shippingCost < 0) {
+      setError("Shipping cost must be a non-negative number.");
+      toast.error("Shipping cost must be a non-negative number.");
+      return;
+    }
+    if (!formData.payment || formData.payment.length === 0) {
+      setError("At least one payment method is required.");
+      toast.error("At least one payment method is required.");
+      return;
+    }
     if (formData.bg_color && !/^#[0-9A-F]{6}$/i.test(formData.bg_color)) {
       setError("Background color must be a valid hex code (e.g., #FFFFFF).");
       toast.error("Background color must be a valid hex code (e.g., #FFFFFF).");
@@ -165,7 +188,11 @@ const AddProduct = () => {
           product_base_price: basePrice,
           product_discounted_price: discountedPrice,
           product_stock: stock,
-          bg_color: formData.bg_color || "#FFFFFF", // Ensure bg_color is sent
+          shipping: shippingCost,
+          payment: formData.payment,
+          isNewArrival: formData.isNewArrival,
+          isBestSeller: formData.isBestSeller,
+          bg_color: formData.bg_color || "#FFFFFF",
         })
       ).unwrap();
       toast.success("Product created successfully!");
@@ -182,6 +209,10 @@ const AddProduct = () => {
         product_code: "",
         rating: 4,
         bg_color: "#FFFFFF",
+        shipping: "0",
+        payment: ["Cash on Delivery"],
+        isNewArrival: false,
+        isBestSeller: false,
       });
       navigate("/product");
     } catch (err) {
@@ -192,8 +223,11 @@ const AddProduct = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
     setError(null);
   };
 
@@ -211,6 +245,14 @@ const AddProduct = () => {
       ? selectedOptions.map((opt) => opt.value)
       : [];
     setFormData((prev) => ({ ...prev, subcategories: values }));
+    setError(null);
+  };
+
+  const handlePaymentChange = (selectedOptions) => {
+    const values = selectedOptions
+      ? selectedOptions.map((opt) => opt.value)
+      : [];
+    setFormData((prev) => ({ ...prev, payment: values }));
     setError(null);
   };
 
@@ -336,6 +378,61 @@ const AddProduct = () => {
           />
         </div>
         <div>
+          <label className="block text-gray-700 mb-2">
+            Shipping Cost (Rs.)
+          </label>
+          <input
+            type="number"
+            name="shipping"
+            placeholder="Shipping Cost (Rs.)"
+            value={formData.shipping}
+            onChange={handleChange}
+            required
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Payment Methods</label>
+          <Select
+            isMulti
+            name="payment"
+            options={paymentOptions}
+            classNamePrefix="select"
+            styles={customSelectStyles}
+            value={paymentOptions.filter((opt) =>
+              formData.payment.includes(opt.value)
+            )}
+            onChange={handlePaymentChange}
+            placeholder="Select Payment Methods"
+            isLoading={categoryLoading}
+            isDisabled={categoryLoading || imageUploading}
+          />
+        </div>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-gray-700">
+            <input
+              type="checkbox"
+              name="isNewArrival"
+              checked={formData.isNewArrival}
+              onChange={handleChange}
+              className="h-5 w-5 text-blue-600"
+            />
+            New Arrival
+          </label>
+          <label className="flex items-center gap-2 text-gray-700">
+            <input
+              type="checkbox"
+              name="isBestSeller"
+              checked={formData.isBestSeller}
+              onChange={handleChange}
+              className="h-5 w-5 text-blue-600"
+            />
+            Best Seller
+          </label>
+        </div>
+        <div>
           <label className="block text-gray-700 mb-2">Category</label>
           <Select
             name="category"
@@ -376,7 +473,7 @@ const AddProduct = () => {
           <ImageUpload
             formFields={formData}
             setFormFields={setFormData}
-            fieldName="product_images" // Specify the correct field name
+            fieldName="product_images"
             setImageUploading={setImageUploading}
           />
         </div>

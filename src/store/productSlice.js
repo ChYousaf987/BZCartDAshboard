@@ -103,13 +103,14 @@ export const submitReview = createAsyncThunk(
 
 export const deleteProduct = createAsyncThunk(
   "products/deleteProduct",
-  async (productId, { rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
       const response = await axios.delete(
-        `https://bzbackend.online/api/products/product/${productId}`
+        `https://bzbackend.online/api/products/product/${id}`
       );
-      return { productId, message: response.data.message };
+      return id; // Return the ID of the deleted product
     } catch (err) {
+      console.error("deleteProduct error:", err.response?.data || err.message);
       return rejectWithValue(
         err.response?.data?.message || "Failed to delete product"
       );

@@ -40,7 +40,16 @@ const EditProduct = () => {
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false); // Add state for image uploading
+  const [imageUploading, setImageUploading] = useState(false);
+
+  // Available payment methods
+  const paymentOptions = [
+    { value: "Cash on Delivery", label: "Cash on Delivery" },
+    { value: "Credit Card", label: "Credit Card" },
+    { value: "Debit Card", label: "Debit Card" },
+    { value: "PayPal", label: "PayPal" },
+    { value: "Bank Transfer", label: "Bank Transfer" },
+  ];
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser") || "{}");
@@ -104,6 +113,10 @@ const EditProduct = () => {
         product_code: product.product_code || "",
         rating: product.rating || 4,
         bg_color: product.bg_color || "#FFFFFF",
+        shipping: product.shipping?.toString() || "0",
+        payment: product.payment || ["Cash on Delivery"],
+        isNewArrival: product.isNewArrival || false,
+        isBestSeller: product.isBestSeller || false,
       });
     }
   }, [product, id, formData]);
@@ -170,6 +183,17 @@ const EditProduct = () => {
       toast.error("Category is not defined.");
       return;
     }
+    const shippingCost = Number(formData.shipping);
+    if (isNaN(shippingCost) || shippingCost < 0) {
+      setError("Shipping cost must be a non-negative number.");
+      toast.error("Shipping cost must be a non-negative number.");
+      return;
+    }
+    if (!formData.payment || formData.payment.length === 0) {
+      setError("At least one payment method is required.");
+      toast.error("At least one payment method is required.");
+      return;
+    }
     if (formData.bg_color && !/^#[0-9A-F]{6}$/i.test(formData.bg_color)) {
       setError("Background color must be a valid hex code (e.g., #FFFFFF).");
       toast.error("Background color must be a valid hex code (e.g., #FFFFFF).");
@@ -185,6 +209,10 @@ const EditProduct = () => {
             product_base_price: basePrice,
             product_discounted_price: discountedPrice,
             product_stock: stock,
+            shipping: shippingCost,
+            payment: formData.payment,
+            isNewArrival: formData.isNewArrival,
+            isBestSeller: formData.isBestSeller,
             bg_color: formData.bg_color || "#FFFFFF",
           },
         })
@@ -199,8 +227,8 @@ const EditProduct = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
     setError(null);
   };
 
@@ -218,6 +246,14 @@ const EditProduct = () => {
       ? selectedOptions.map((opt) => opt.value)
       : [];
     setFormData({ ...formData, subcategories: values });
+    setError(null);
+  };
+
+  const handlePaymentChange = (selectedOptions) => {
+    const values = selectedOptions
+      ? selectedOptions.map((opt) => opt.value)
+      : [];
+    setFormData({ ...formData, payment: values });
     setError(null);
   };
 
@@ -340,6 +376,61 @@ const EditProduct = () => {
           />
         </div>
         <div>
+          <label className="block text-gray-700 mb-2">
+            Shipping Cost (Rs.)
+          </label>
+          <input
+            type="number"
+            name="shipping"
+            placeholder="Shipping Cost (Rs.)"
+            value={formData.shipping}
+            onChange={handleChange}
+            required
+            min="0"
+            step="0.01"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Payment Methods</label>
+          <Select
+            isMulti
+            name="payment"
+            options={paymentOptions}
+            classNamePrefix="select"
+            styles={customSelectStyles}
+            value={paymentOptions.filter((opt) =>
+              formData.payment.includes(opt.value)
+            )}
+            onChange={handlePaymentChange}
+            placeholder="Select Payment Methods"
+            isLoading={categoryLoading}
+            isDisabled={categoryLoading || imageUploading}
+          />
+        </div>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-gray-700">
+            <input
+              type="checkbox"
+              name="isNewArrival"
+              checked={formData.isNewArrival}
+              onChange={handleChange}
+              className="h-5 w-5 text-blue-600"
+            />
+            New Arrival
+          </label>
+          <label className="flex items-center gap-2 text-gray-700">
+            <input
+              type="checkbox"
+              name="isBestSeller"
+              checked={formData.isBestSeller}
+              onChange={handleChange}
+              className="h-5 w-5 text-blue-600"
+            />
+            Best Seller
+          </label>
+        </div>
+        <div>
           <label className="block text-gray-700 mb-2">Category</label>
           <Select
             name="category"
@@ -353,7 +444,7 @@ const EditProduct = () => {
             isClearable
             placeholder="Select Category"
             isLoading={categoryLoading}
-            isDisabled={categoryLoading || imageUploading} // Disable if images are uploading
+            isDisabled={categoryLoading || imageUploading}
           />
         </div>
         <div>
@@ -370,7 +461,7 @@ const EditProduct = () => {
               formData.subcategories.includes(opt.value)
             )}
             onChange={handleSubcategoryChange}
-            isDisabled={!formData.category || categoryLoading || imageUploading} // Disable if images are uploading
+            isDisabled={!formData.category || categoryLoading || imageUploading}
             placeholder="Select Subcategories"
             isLoading={categoryLoading}
           />
@@ -380,7 +471,7 @@ const EditProduct = () => {
           <ImageUpload
             formFields={formData}
             setFormFields={setFormData}
-            fieldName="product_images" // Specify the correct field name
+            fieldName="product_images"
             setImageUploading={setImageUploading}
           />
         </div>
@@ -421,7 +512,7 @@ const EditProduct = () => {
         </div>
         <button
           type="submit"
-          disabled={loading || imageUploading} // Disable button if images are uploading
+          disabled={loading || imageUploading}
           className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading || imageUploading ? "Updating..." : "Update Product"}

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProducts, deleteProduct, fetchCart } from "../store/productSlice";
-// import { fetchCart } from "../features/cart/cartSlice"; // Import fetchCart
+import { fetchProducts, deleteProduct } from "../store/productSlice";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import Select from "react-select";
@@ -47,7 +46,6 @@ const Product = () => {
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser"));
-  const guestId = localStorage.getItem("guestId");
   if (!user || !["superadmin", "admin"].includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -93,10 +91,6 @@ const Product = () => {
         .unwrap()
         .then(() => {
           toast.success("Product deleted successfully!");
-          // Refetch cart to reflect removal of deleted product
-          if (guestId) {
-            dispatch(fetchCart({ guestId }));
-          }
         })
         .catch((err) => {
           toast.error(err || "Failed to delete product");
@@ -206,6 +200,16 @@ const Product = () => {
                       Out of Stock
                     </span>
                   )}
+                  {item.isNewArrival && (
+                    <span className="absolute top-2 left-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                      New Arrival
+                    </span>
+                  )}
+                  {item.isBestSeller && (
+                    <span className="absolute top-10 left-2 bg-yellow-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                      Best Seller
+                    </span>
+                  )}
                 </div>
                 <div className="p-5">
                   <h2 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-1">
@@ -221,6 +225,18 @@ const Product = () => {
                     </del>
                     <span className="text-blue-600 font-semibold">
                       Rs. {item.product_discounted_price}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-gray-500">Shipping:</span>
+                    <span className="text-gray-800">
+                      Rs. {item.shipping || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-gray-500">Payment Methods:</span>
+                    <span className="text-gray-800">
+                      {item.payment?.join(", ") || "N/A"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
