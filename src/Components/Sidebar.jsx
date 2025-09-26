@@ -4,8 +4,9 @@ import { useSelector } from "react-redux";
 
 const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
-  const orders = useSelector((state) => state.orders.orders) || [];
+  const { orders, newOrders } = useSelector((state) => state.orders);
   const orderCount = orders.filter((order) => order.payment_status === "completed").length;
+  const newOrderCount = newOrders.length;
 
   const navItems = [
     { path: "/product", label: "Dashboard", roles: ["superadmin", "admin", "team"] },
@@ -76,7 +77,14 @@ const Sidebar = () => {
                     }
                   />
                 </svg>
-                <span className="text-sm">{item.label}</span>
+                <span className="text-sm">
+                  {item.label}
+                  {item.label === "Orders" && newOrderCount > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      {newOrderCount}
+                    </span>
+                  )}
+                </span>
               </NavLink>
             )
           ))}

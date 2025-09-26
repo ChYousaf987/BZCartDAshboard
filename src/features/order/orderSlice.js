@@ -1,14 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const BASE_URL = "https://bzbackend.online/api/orders";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3003/api/orders";
 
 export const fetchOrders = createAsyncThunk(
   "orders/fetchOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/orders`);
-      console.log("Fetch orders response:", response.data);
+      const response = await axios.get(`${BASE_URL}/orders`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      console.log("Fetch orders response:", response.data.length, "orders");
       return response.data;
     } catch (error) {
       console.error("Fetch orders error:", {
@@ -23,62 +27,25 @@ export const fetchOrders = createAsyncThunk(
   }
 );
 
-export const fetchNewOrders = createAsyncThunk(
-  "orders/fetchNewOrders",
-  async (lastCheck, { rejectWithValue, getState }) => {
+export const fetchOrderById = createAsyncThunk(
+  "orders/fetchOrderById",
+  async (id, { rejectWithValue }) => {
     try {
-      const url = lastCheck
-        ? `${BASE_URL}/orders?since=${lastCheck}`
-        : `${BASE_URL}/orders`;
-      console.log("Fetching new orders from:", url);
-      const response = await axios.get(url);
-      const orders = response.data;
-      const existingOrderIds = new Set([
-        ...getState().orders.orders.map((o) => o._id),
-        ...getState().orders.newOrders.map((o) => o._id),
-      ]);
-      const newOrders = lastCheck
-        ? orders.filter(
-            (order) =>
-              new Date(order.createdAt) > new Date(lastCheck) &&
-              !existingOrderIds.has(order._id)
-          )
-        : orders.filter((order) => !existingOrderIds.has(order._id));
-      console.log("New orders fetched:", newOrders);
-      return newOrders;
+      const response = await axios.get(`${BASE_URL}/order/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      console.log("Fetch order by ID response:", response.data);
+      return response.data;
     } catch (error) {
-      console.error("Fetch new orders error:", {
-        url,
+      console.error("Fetch order by ID error:", {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message,
       });
-      if (error.response?.status === 404) {
-        console.warn("New orders endpoint not found, falling back to fetchOrders");
-        try {
-          const response = await axios.get(`${BASE_URL}/orders`);
-          const orders = response.data;
-          const existingOrderIds = new Set([
-            ...getState().orders.orders.map((o) => o._id),
-            ...getState().orders.newOrders.map((o) => o._id),
-          ]);
-          const newOrders = lastCheck
-            ? orders.filter(
-                (order) =>
-                  new Date(order.createdAt) > new Date(lastCheck) &&
-                  !existingOrderIds.has(order._id)
-              )
-            : orders.filter((order) => !existingOrderIds.has(order._id));
-          return newOrders;
-        } catch (fallbackError) {
-          console.error("Fallback fetch error:", fallbackError.message);
-          return rejectWithValue(
-            "New orders endpoint unavailable, and fallback fetch failed."
-          );
-        }
-      }
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch new orders"
+        error.response?.data?.message || "Failed to fetch order details"
       );
     }
   }
@@ -88,7 +55,15 @@ export const updateOrderStatus = createAsyncThunk(
   "orders/updateOrderStatus",
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${BASE_URL}/orders/${id}`, { status });
+      const response = await axios.put(
+        `${BASE_URL}/order/${id}`,
+        { status },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       console.log("Update order status response:", response.data);
       return response.data;
     } catch (error) {
@@ -108,7 +83,11 @@ export const deleteOrder = createAsyncThunk(
   "orders/deleteOrder",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${BASE_URL}/orders/${id}`);
+      await axios.delete(`${BASE_URL}/order/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       console.log("Order deleted:", id);
       return id;
     } catch (error) {
@@ -129,6 +108,7 @@ const orderSlice = createSlice({
   initialState: {
     orders: [],
     newOrders: [],
+    currentOrder: null,
     loading: false,
     error: null,
     lastCheck: new Date().toISOString(),
@@ -147,32 +127,30 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
+        const previousOrders = new Set(state.orders.map((order) => order._id));
         state.orders = action.payload;
-        state.newOrders = [];
+        state.newOrders = action.payload.filter(
+          (order) => !previousOrders.has(order._id)
+        );
         state.lastCheck = new Date().toISOString();
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(fetchNewOrders.pending, (state) => {
+      .addCase(fetchOrderById.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchNewOrders.fulfilled, (state, action) => {
+      .addCase(fetchOrderById.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = [
-          ...action.payload,
-          ...state.orders.filter(
-            (order) => !action.payload.some((newOrder) => newOrder._id === order._id)
-          ),
-        ];
-        state.newOrders = action.payload;
-        state.lastCheck = new Date().toISOString();
+        state.currentOrder = action.payload;
+        state.error = null;
       })
-      .addCase(fetchNewOrders.rejected, (state, action) => {
+      .addCase(fetchOrderById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.currentOrder = null;
       })
       .addCase(updateOrderStatus.pending, (state) => {
         state.loading = true;
@@ -184,13 +162,16 @@ const orderSlice = createSlice({
           (order) => order._id === action.payload._id
         );
         if (index !== -1) {
-          state.orders[index] = action.payload;
+          state.orders[index] = { ...action.payload };
         }
         const newIndex = state.newOrders.findIndex(
           (order) => order._id === action.payload._id
         );
         if (newIndex !== -1) {
-          state.newOrders[newIndex] = action.payload;
+          state.newOrders[newIndex] = { ...action.payload };
+        }
+        if (state.currentOrder?._id === action.payload._id) {
+          state.currentOrder = { ...action.payload };
         }
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
@@ -209,6 +190,9 @@ const orderSlice = createSlice({
         state.newOrders = state.newOrders.filter(
           (order) => order._id !== action.payload
         );
+        if (state.currentOrder?._id === action.payload) {
+          state.currentOrder = null;
+        }
       })
       .addCase(deleteOrder.rejected, (state, action) => {
         state.loading = false;
