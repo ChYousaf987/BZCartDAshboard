@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,7 +7,18 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("myUser"));
-  const newOrdersCount = useSelector((state) => state.orders.newOrders.length);
+  const { orders, newOrders } = useSelector((state) => state.orders);
+
+  // Calculate total unique orders with completed payment status
+  const totalOrdersCount = useMemo(() => {
+    const allOrders = [...newOrders, ...orders];
+    const uniqueOrders = allOrders.filter(
+      (order, index, self) =>
+        order.payment_status === "completed" &&
+        index === self.findIndex((o) => o._id === order._id)
+    );
+    return uniqueOrders.length;
+  }, [orders, newOrders]);
 
   const linkClasses = (path) =>
     `px-4 py-3 rounded-lg transition-all duration-300 font-medium text-lg ${
@@ -22,9 +33,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-60 bg-gradient-to-b from-blue-50 to-blue-100 p-6 min-h-screen fixed top-0 left-0 flex flex-col justify-between shadow-md">
+    <div className="w-60 bg-gradient-to-b from-blue-50 to-blue-100 p-4 min-h-screen fixed top-0 left-0 flex flex-col justify-between shadow-md">
       <div>
-        <div className="flex justify-center mb-6 -mt-5">
+        <div className="flex justify-center mb-6 -mt-4">
           <img
             src="/logg.png"
             alt="Logo"
@@ -32,7 +43,7 @@ const Sidebar = () => {
           />
         </div>
         <nav className="flex flex-col justify-between items-center h-[80vh]">
-          <div className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col gap-1 w-full">
             <Link to="/product" className={linkClasses("/product")}>
               📦 Product
             </Link>
@@ -64,11 +75,11 @@ const Sidebar = () => {
             {["superadmin", "team"].includes(user?.role) && (
               <div className="relative">
                 <Link to="/orders" className={linkClasses("/orders")}>
-                  🛒 Orders
+                  🛒 Orders ({totalOrdersCount})
                 </Link>
-                {newOrdersCount > 0 && (
+                {newOrders.length > 0 && (
                   <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {newOrdersCount}
+                    {newOrders.length}
                   </span>
                 )}
               </div>
@@ -76,7 +87,7 @@ const Sidebar = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-3 rounded-lg transition-all duration-300 font-medium text-lg bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 w-full"
+            className="px-4 py-3 rounded-lg transition-all duration-300 font-medium text-lg bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 w-full mt-4"
           >
             🚪 Logout
           </button>
