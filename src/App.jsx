@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate, BrowserRouter as Router } from "react-router-dom";
 import Navbar from "./Components/Navbar.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Product from "./Components/Product.jsx";
@@ -18,9 +13,9 @@ import ManageCategories from "./Components/ManageCategories.jsx";
 import { Toaster } from "react-hot-toast";
 import Reels from "./Components/Reels.jsx";
 import AllUser from "./Components/AllUser.jsx";
-import Deals from "./Components/Deals.jsx"; // Add this line
-import AddDeal from "./Components/AddDeal.jsx"; // Add this line
-import EditDeal from "./Components/EditDeal.jsx"; // Add this line
+import Deals from "./Components/Deals.jsx";
+import AddDeal from "./Components/AddDeal.jsx";
+import EditDeal from "./Components/EditDeal.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -30,11 +25,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 font-daraz">
       <Sidebar />
-      <div className="flex-1 flex flex-col pl-60">
+      <div className="flex-1 flex flex-col ml-[15rem] z-0">
         <Navbar />
-        <div className="flex-1 p-6">{children}</div>
+        <div className="flex-1 p-6 overflow-auto">{children}</div>
       </div>
     </div>
   );
@@ -69,7 +64,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        
         <Route
           path="/edit-product/:id"
           element={
@@ -126,7 +120,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-       
         <Route
           path="/messages"
           element={
