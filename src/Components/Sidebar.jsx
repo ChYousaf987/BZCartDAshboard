@@ -1,8 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
+  const orders = useSelector((state) => state.orders.orders) || [];
+  const orderCount = orders.filter((order) => order.payment_status === "completed").length;
 
   const navItems = [
     { path: "/product", label: "Dashboard", roles: ["superadmin", "admin", "team"] },
@@ -21,7 +24,12 @@ const Sidebar = () => {
   return (
     <aside className="fixed top-0 left-0 h-full w-60 !bg-dark bg-opacity-100 text-white font-daraz shadow-xl z-50 overflow-hidden border-r-4 border-gradient-to-b from-primary to-dark transition-all hover:shadow-2xl animate-fadeIn">
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-8 text-primary">BZCart Dashboard</h2>
+        <h2 className="text-2xl font-bold mb-4 text-primary">BZCart Dashboard</h2>
+        <div className="mb-8 text-sm">
+          <span className="bg-gray-800 text-primary font-bold px-3 py-1 rounded-full">
+            Total Orders: {orderCount}
+          </span>
+        </div>
         <nav className="space-y-2">
           {navItems.map((item) => (
             user && item.roles.includes(user.role) && (
@@ -29,10 +37,10 @@ const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 p-3 rounded-md transition-all duration-300 ${
+                  `flex items-center gap-2 p-3 rounded-md transition-all duration-300 !text-white ${
                     isActive
                       ? "bg-primary text-white shadow-md"
-                      : "hover:bg-accent hover:bg-opacity-80 hover:text-white hover:shadow-lg"
+                      : "hover:bg-accent hover:bg-opacity-80 hover:shadow-lg"
                   }`
                 }
               >

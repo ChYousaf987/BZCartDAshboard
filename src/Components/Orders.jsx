@@ -21,8 +21,9 @@ const Orders = () => {
   );
   const [statusUpdating, setStatusUpdating] = useState({});
   const [deleting, setDeleting] = useState({});
+  const [notifiedOrderIds, setNotifiedOrderIds] = useState(new Set());
 
-  // Polling for new orders every 15 seconds
+  // Polling for new orders every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (["superadmin", "admin", "team"].includes(user?.role)) {
@@ -37,7 +38,7 @@ const Orders = () => {
           }
         });
       }
-    }, 15000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [dispatch, user, lastCheck]);
@@ -57,32 +58,25 @@ const Orders = () => {
     dispatch(resetNewOrders());
   }, [dispatch, user, loading, orders.length]);
 
-  // Toast notifications for new orders
+  // Toast notifications for new orders (only for orders not already notified globally)
   useEffect(() => {
     if (newOrders.length > 0) {
       newOrders.forEach((order) => {
-        toast.success(
-          `New order from ${order.full_name || order.order_email}!`,
-          {
-            duration: 5000,
-            position: "top-right",
-            icon: "🛒",
-            action: {
-              text: "Refresh Now",
-              onClick: () => dispatch(fetchOrders()),
-            },
-          }
-        );
+        if (!notifiedOrderIds.has(order._id)) {
+          // Global toast in App.jsx handles notifications; skip here to avoid duplicates
+          setNotifiedOrderIds((prev) => new Set([...prev, order._id]));
+        }
       });
     }
-  }, [newOrders, dispatch]);
+  }, [newOrders, notifiedOrderIds]);
 
   // Debug logs
   useEffect(() => {
     console.log("Orders state:", orders);
     console.log("New orders state:", newOrders);
     console.log("Last check:", lastCheck);
-  }, [orders, newOrders, lastCheck]);
+    console.log("Notified order IDs:", [...notifiedOrderIds]);
+  }, [orders, newOrders, lastCheck, notifiedOrderIds]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     setStatusUpdating((prev) => ({ ...prev, [orderId]: true }));

@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate, BrowserRouter as Router } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNewOrders } from "./features/order/orderSlice";
+import { toast } from "react-hot-toast";
 import Navbar from "./Components/Navbar.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Product from "./Components/Product.jsx";
@@ -19,6 +22,46 @@ import EditDeal from "./Components/EditDeal.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
+  const dispatch = useDispatch();
+  const { newOrders, lastCheck } = useSelector((state) => state.orders);
+  const [notifiedOrderIds, setNotifiedOrderIds] = React.useState(new Set());
+
+  // Global polling for new orders every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (["superadmin", "admin", "team"].includes(user?.role)) {
+        dispatch(fetchNewOrders(lastCheck)).catch((err) => {
+          console.error("Global polling error:", err);
+          toast.error("Failed to fetch new orders. Retrying...");
+        });
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [dispatch, user, lastCheck]);
+
+  // Global toast notifications for new orders
+  useEffect(() => {
+    if (newOrders.length > 0) {
+      newOrders.forEach((order) => {
+        if (!notifiedOrderIds.has(order._id)) {
+          toast.success(
+            `New order from ${order.full_name || order.order_email}!`,
+            {
+              duration: 5000,
+              position: "top-right",
+              icon: "🛒",
+              action: {
+                text: "View Orders",
+                onClick: () => window.location.href = "/orders",
+              },
+            }
+          );
+          setNotifiedOrderIds((prev) => new Set([...prev, order._id]));
+        }
+      });
+    }
+  }, [newOrders, notifiedOrderIds]);
 
   if (!user || !["superadmin", "admin", "team"].includes(user.role)) {
     return <Navigate to="/login" />;

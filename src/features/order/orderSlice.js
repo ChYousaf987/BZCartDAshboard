@@ -161,14 +161,13 @@ const orderSlice = createSlice({
       })
       .addCase(fetchNewOrders.fulfilled, (state, action) => {
         state.loading = false;
-        // Merge new orders into orders state
         state.orders = [
           ...action.payload,
           ...state.orders.filter(
             (order) => !action.payload.some((newOrder) => newOrder._id === order._id)
           ),
         ];
-        state.newOrders = action.payload; // Keep newOrders for toast
+        state.newOrders = action.payload;
         state.lastCheck = new Date().toISOString();
       })
       .addCase(fetchNewOrders.rejected, (state, action) => {
