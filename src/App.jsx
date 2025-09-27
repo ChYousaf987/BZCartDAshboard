@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate, BrowserRouter as Router } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchOrders } from "./features/order/orderSlice";
+import { toast } from "react-hot-toast";
 import Navbar from "./Components/Navbar.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Product from "./Components/Product.jsx";
@@ -20,6 +23,36 @@ import EditDeal from "./Components/EditDeal.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
+  const dispatch = useDispatch();
+  const { newOrders } = useSelector((state) => state.orders);
+
+  useEffect(() => {
+    if (["superadmin", "admin", "team"].includes(user?.role)) {
+      const fetchAndLogOrders = () => {
+        console.log("Fetching orders...");
+        dispatch(fetchOrders())
+          .unwrap()
+          .then((fetchedOrders) => {
+            console.log("Orders fetched successfully:", fetchedOrders.length);
+            if (newOrders.length > 0) {
+              toast.success(`${newOrders.length} new order(s) received!`);
+            }
+          })
+          .catch((err) => {
+            console.error("Fetch orders error:", err);
+            toast.error("Failed to load orders.");
+          });
+      };
+
+      // Initial fetch
+      fetchAndLogOrders();
+
+      // Poll every 10 seconds
+      const interval = setInterval(fetchAndLogOrders, 10000);
+
+      return () => clearInterval(interval); // Cleanup on unmount
+    }
+  }, [dispatch, user?.role, newOrders.length]);
 
   if (!user || !["superadmin", "admin", "team"].includes(user.role)) {
     return <Navigate to="/login" />;

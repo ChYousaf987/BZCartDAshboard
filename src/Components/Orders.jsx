@@ -1,58 +1,12 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchOrders } from "../features/order/orderSlice";
+import React from "react";
+import { useSelector } from "react-redux";
 import { PulseLoader } from "react-spinners";
 import { toast, Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
 
 const Orders = () => {
-  const dispatch = useDispatch();
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
-  const { orders, newOrders, loading, error } = useSelector((state) => state.orders);
-
-  useEffect(() => {
-    if (["superadmin", "admin", "team"].includes(user?.role)) {
-      const fetchAndLogOrders = () => {
-        console.log("Fetching orders...");
-        dispatch(fetchOrders())
-          .unwrap()
-          .then((fetchedOrders) => {
-            console.log("Orders fetched successfully:", fetchedOrders.length);
-            if (newOrders.length > 0) {
-              toast.success(`${newOrders.length} new order(s) received!`);
-            }
-          })
-          .catch((err) => {
-            console.error("Fetch orders error:", err);
-            toast.error("Failed to load orders.");
-          });
-      };
-
-      // Initial fetch
-      fetchAndLogOrders();
-
-      // Poll every 10 seconds
-      const interval = setInterval(fetchAndLogOrders, 10000);
-
-      return () => clearInterval(interval); // Cleanup on unmount
-    }
-  }, [dispatch, user?.role, newOrders.length]);
-
-  const handleRefresh = () => {
-    console.log("Manual refresh triggered");
-    dispatch(fetchOrders())
-      .unwrap()
-      .then((fetchedOrders) => {
-        console.log("Orders refreshed successfully:", fetchedOrders.length);
-        if (newOrders.length > 0) {
-          toast.success(`${newOrders.length} new order(s) received!`);
-        }
-      })
-      .catch((err) => {
-        console.error("Refresh orders error:", err);
-        toast.error("Failed to refresh orders.");
-      });
-  };
+  const { orders, loading, error } = useSelector((state) => state.orders);
 
   const getStatusStyles = (status) => {
     switch (status) {
@@ -107,12 +61,6 @@ const Orders = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-dark">Orders</h2>
-          <button
-            onClick={handleRefresh}
-            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-dark"
-          >
-            Refresh Orders
-          </button>
         </div>
         <div className="bg-white rounded-3xl shadow-xl p-6">
           <div className="overflow-x-auto">
