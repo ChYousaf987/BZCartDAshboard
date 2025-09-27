@@ -6,6 +6,7 @@ import ImageUpload from "./ImageUpload";
 import { createProduct } from "../store/productSlice";
 import Select from "react-select";
 import axios from "axios";
+import ErrorBoundary from "./ErrorBoundary"; // Import ErrorBoundary
 
 const customSelectStyles = {
   control: (base) => ({
@@ -470,12 +471,14 @@ const AddProduct = () => {
         </div>
         <div>
           <label className="block text-gray-700 mb-2">Images (optional)</label>
-          <ImageUpload
-            formFields={formData}
-            setFormFields={setFormData}
-            fieldName="product_images"
-            setImageUploading={setImageUploading}
-          />
+          <ErrorBoundary>
+            <ImageUpload
+              formFields={formData}
+              setFormFields={setFormData}
+              fieldName="product_images"
+              setImageUploading={setImageUploading}
+            />
+          </ErrorBoundary>
         </div>
         <div>
           <label className="block text-gray-700 mb-2">

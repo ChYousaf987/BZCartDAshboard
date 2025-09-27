@@ -24,9 +24,13 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
     "react-select": "^5.10.1",
+    "react-sortable": "^2.0.0",
+    "react-sortablejs": "^6.1.4",
     "react-spinners": "^0.17.0",
     "react-toastify": "^11.0.5",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "sortablejs": "^1.15.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
