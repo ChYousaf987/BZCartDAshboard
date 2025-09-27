@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3003/api/orders";
+const BASE_URL =  "https://bzbackend.online/api/orders";
 
 export const fetchOrders = createAsyncThunk(
   "orders/fetchOrders",

@@ -27,7 +27,7 @@ const OrderDetails = () => {
           toast.error("Failed to load order details.");
         });
     }
-  }, [dispatch, id, user?.role]); // Only depend on user.role to avoid re-renders due to user object changes
+  }, [dispatch, id, user?.role]);
 
   useEffect(() => {
     console.log("Current state:", { currentOrder, loading, error });
@@ -195,6 +195,9 @@ const OrderDetails = () => {
               }) : "No date"}</p>
               <p><strong>Payment Status:</strong> {currentOrder.payment_status || "Unknown"}</p>
               <p><strong>Total Amount:</strong> Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}</p>
+              {currentOrder.discount_applied && (
+                <p><strong>Discount Applied:</strong> {currentOrder.discount_code || "Unknown"} (Original: Rs {currentOrder.original_amount?.toFixed(2) || "0.00"})</p>
+              )}
               <div className="mt-4">
                 <strong>Status:</strong>
                 <select
@@ -222,7 +225,6 @@ const OrderDetails = () => {
                   <th className="px-4 py-3">Product Name</th>
                   <th className="px-4 py-3">Brand</th>
                   <th className="px-4 py-3">Quantity</th>
-                  <th className="px-4 py-3">Price</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,10 +251,15 @@ const OrderDetails = () => {
                     <td className="px-4 py-3">{item.product_id?.product_name || "Unknown Product"}</td>
                     <td className="px-4 py-3">{item.product_id?.brand_name || "No brand"}</td>
                     <td className="px-4 py-3">{item.quantity}</td>
-                    <td className="px-4 py-3">Rs {item.product_id?.product_price?.toFixed(2) || "0.00"}</td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="bg-gray-100 font-semibold">
+                  <td colSpan="3" className="px-4 py-3 text-right">Total Amount:</td>
+                  <td className="px-4 py-3">Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           {user.role === "superadmin" && (
