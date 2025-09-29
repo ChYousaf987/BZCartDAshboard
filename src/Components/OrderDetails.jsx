@@ -224,6 +224,7 @@ const OrderDetails = () => {
                   <th className="px-4 py-3">Image</th>
                   <th className="px-4 py-3">Product Name</th>
                   <th className="px-4 py-3">Brand</th>
+                  <th className="px-4 py-3">Size</th>
                   <th className="px-4 py-3">Quantity</th>
                 </tr>
               </thead>
@@ -250,13 +251,14 @@ const OrderDetails = () => {
                     </td>
                     <td className="px-4 py-3">{item.product_id?.product_name || "Unknown Product"}</td>
                     <td className="px-4 py-3">{item.product_id?.brand_name || "No brand"}</td>
+                    <td className="px-4 py-3">{item.selected_size || "N/A"}</td>
                     <td className="px-4 py-3">{item.quantity}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="bg-gray-100 font-semibold">
-                  <td colSpan="3" className="px-4 py-3 text-right">Total Amount:</td>
+                  <td colSpan="4" className="px-4 py-3 text-right">Total Amount:</td>
                   <td className="px-4 py-3">Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}</td>
                 </tr>
               </tfoot>

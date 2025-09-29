@@ -195,7 +195,9 @@ const Product = () => {
                     alt={item.product_name}
                     className="w-full h-full object-cover"
                   />
-                  {item.product_stock <= 0 && (
+                  {(!item.sizes || item.sizes.length === 0
+                    ? item.product_stock <= 0
+                    : item.sizes.every((size) => size.stock <= 0)) && (
                     <span className="absolute top-2 right-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
                       Out of Stock
                     </span>
@@ -239,18 +241,42 @@ const Product = () => {
                       {item.payment?.join(", ") || "N/A"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-gray-500">Stock:</span>
-                    <span
-                      className={`font-semibold ${
-                        item.product_stock <= 5
-                          ? "text-red-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      {item.product_stock} units
-                    </span>
-                  </div>
+                  {item.sizes && item.sizes.length > 0 ? (
+                    <div className="mb-3">
+                      <span className="text-gray-500">Sizes Available:</span>
+                      <ul className="list-disc pl-5 text-gray-800">
+                        {item.sizes.map((size, index) => (
+                          <li
+                            key={index}
+                            className={
+                              size.stock <= 5 ? "text-red-600" : "text-gray-800"
+                            }
+                          >
+                            {size.size}: {size.stock} in stock
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-gray-500">Stock:</span>
+                      <span
+                        className={`font-semibold ${
+                          item.product_stock <= 5
+                            ? "text-red-600"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {item.product_stock} units
+                      </span>
+                    </div>
+                  )}
+                  {item.warranty && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-gray-500">Warranty:</span>
+                      <span className="text-gray-800">{item.warranty}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-gray-500">Category:</span>
                     <span className="text-gray-800">

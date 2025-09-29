@@ -25,6 +25,15 @@ const Orders = () => {
     }
   };
 
+  // Function to get sizes for an order
+  const getOrderSizes = (products) => {
+    const sizes = products
+      .map((item) => item.selected_size)
+      .filter((size) => size) // Remove null/undefined
+      .join(", ");
+    return sizes || "N/A";
+  };
+
   if (!user || !["superadmin", "admin", "team"].includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 font-daraz">
@@ -70,6 +79,7 @@ const Orders = () => {
                   <th className="px-4 py-3">Order ID</th>
                   <th className="px-4 py-3">Customer</th>
                   <th className="px-4 py-3">Total (Rs)</th>
+                  <th className="px-4 py-3">Size</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Actions</th>
@@ -84,6 +94,7 @@ const Orders = () => {
                     <td className="px-4 py-3">{order._id}</td>
                     <td className="px-4 py-3">{order.full_name || "No name"}</td>
                     <td className="px-4 py-3">{order.total_amount?.toFixed(2) || "0.00"}</td>
+                    <td className="px-4 py-3">{getOrderSizes(order.products)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-md ${getStatusStyles(order.status)}`}>
                         {order.status || "pending"}

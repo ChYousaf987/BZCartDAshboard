@@ -6,7 +6,7 @@ import ImageUpload from "./ImageUpload";
 import { createProduct } from "../store/productSlice";
 import Select from "react-select";
 import axios from "axios";
-import ErrorBoundary from "./ErrorBoundary"; // Import ErrorBoundary
+import ErrorBoundary from "./ErrorBoundary";
 
 const customSelectStyles = {
   control: (base) => ({
@@ -39,6 +39,8 @@ const AddProduct = () => {
     category: "",
     subcategories: [],
     product_stock: "",
+    sizes: [],
+    warranty: "",
     brand_name: "",
     product_code: "",
     rating: 4,
@@ -53,8 +55,21 @@ const AddProduct = () => {
   const [subcategories, setSubcategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
+  const [enableSizes, setEnableSizes] = useState(false);
+  const [sizeInputs, setSizeInputs] = useState([
+    { size: "S", stock: "" },
+    { size: "M", stock: "" },
+    { size: "L", stock: "" },
+    { size: "XL", stock: "" },
+  ]);
 
-  // Available payment methods
+  const sizeOptions = [
+    { value: "S", label: "Small" },
+    { value: "M", label: "Medium" },
+    { value: "L", label: "Large" },
+    { value: "XL", label: "Extra Large" },
+  ];
+
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
     { value: "Credit Card", label: "Credit Card" },
@@ -63,7 +78,6 @@ const AddProduct = () => {
     { value: "Bank Transfer", label: "Bank Transfer" },
   ];
 
-  // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser") || "{}");
   if (!user || !["superadmin", "admin"].includes(user.role)) {
     return (
@@ -118,7 +132,6 @@ const AddProduct = () => {
       return;
     }
 
-    // Validate required fields
     if (!formData.product_name) {
       setError("Product name is required.");
       toast.error("Product name is required.");
@@ -135,7 +148,7 @@ const AddProduct = () => {
       return;
     }
     const stock = Number(formData.product_stock);
-    if (isNaN(stock) || stock < 0) {
+    if (!enableSizes && (isNaN(stock) || stock < 0)) {
       setError("Stock must be a non-negative number.");
       toast.error("Stock must be a non-negative number.");
       return;
@@ -181,14 +194,28 @@ const AddProduct = () => {
       toast.error("Background color must be a valid hex code (e.g., #FFFFFF).");
       return;
     }
+    if (enableSizes) {
+      for (const size of sizeInputs) {
+        if (size.size && (isNaN(size.stock) || size.stock < 0)) {
+          setError("All sizes must have a valid non-negative stock.");
+          toast.error("All sizes must have a valid non-negative stock.");
+          return;
+        }
+      }
+    }
 
     try {
+      const sizesToSubmit = enableSizes
+        ? sizeInputs.filter((size) => size.size && size.stock !== "")
+        : [];
       await dispatch(
         createProduct({
           ...formData,
           product_base_price: basePrice,
           product_discounted_price: discountedPrice,
           product_stock: stock,
+          sizes: sizesToSubmit,
+          warranty: formData.warranty || "",
           shipping: shippingCost,
           payment: formData.payment,
           isNewArrival: formData.isNewArrival,
@@ -206,6 +233,8 @@ const AddProduct = () => {
         category: "",
         subcategories: [],
         product_stock: "",
+        sizes: [],
+        warranty: "",
         brand_name: "",
         product_code: "",
         rating: 4,
@@ -215,6 +244,13 @@ const AddProduct = () => {
         isNewArrival: false,
         isBestSeller: false,
       });
+      setSizeInputs([
+        { size: "S", stock: "" },
+        { size: "M", stock: "" },
+        { size: "L", stock: "" },
+        { size: "XL", stock: "" },
+      ]);
+      setEnableSizes(false);
       navigate("/product");
     } catch (err) {
       const errorMessage = err.message || "Failed to create product";
@@ -254,6 +290,13 @@ const AddProduct = () => {
       ? selectedOptions.map((opt) => opt.value)
       : [];
     setFormData((prev) => ({ ...prev, payment: values }));
+    setError(null);
+  };
+
+  const handleSizeChange = (index, field, value) => {
+    const newSizes = [...sizeInputs];
+    newSizes[index][field] = value;
+    setSizeInputs(newSizes);
     setError(null);
   };
 
@@ -372,16 +415,69 @@ const AddProduct = () => {
             placeholder="Stock Quantity"
             value={formData.product_stock}
             onChange={handleChange}
-            required
+            required={!enableSizes}
             min="0"
             step="1"
+            disabled={enableSizes}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">
-            Shipping Cost (Rs.)
+          <label className="flex items-center gap-2 text-gray-700 mb-2">
+            <input
+              type="checkbox"
+              checked={enableSizes}
+              onChange={() => setEnableSizes(!enableSizes)}
+              className="h-5 w-5 text-blue-600"
+            />
+            Enable Sizes
           </label>
+          {enableSizes && (
+            <div className="space-y-3">
+              {sizeInputs.map((sizeInput, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Select
+                    options={sizeOptions}
+                    classNamePrefix="select"
+                    styles={customSelectStyles}
+                    value={sizeOptions.find(
+                      (opt) => opt.value === sizeInput.size
+                    )}
+                    onChange={(selected) =>
+                      handleSizeChange(index, "size", selected ? selected.value : "")
+                    }
+                    placeholder="Select Size"
+                    className="w-1/2"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Stock"
+                    value={sizeInput.stock}
+                    onChange={(e) =>
+                      handleSizeChange(index, "stock", e.target.value)
+                    }
+                    min="0"
+                    step="1"
+                    className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Warranty (optional)</label>
+          <input
+            type="text"
+            name="warranty"
+            placeholder="Warranty (e.g., 1 Year)"
+            value={formData.warranty}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Shipping Cost (Rs.)</label>
           <input
             type="number"
             name="shipping"
