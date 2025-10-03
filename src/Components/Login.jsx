@@ -12,8 +12,8 @@ const Login = () => {
     {
       _id: "1",
       username: "Super Admin",
-      email: "superadmin@gmail.com",
-      password: "superadmin123",
+      email: "Mz007@gmail.com",
+      password: "MzMzMz@1721",
       role: "superadmin",
       isApproved: true,
       token: "dummy-superadmin-token",
