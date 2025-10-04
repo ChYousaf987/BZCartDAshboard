@@ -15,21 +15,30 @@ export default function ImageUpload({
   singleImage = false,
   setImageUploading,
 }) {
+  // ✅ Prevent crash when not provided
+  if (!setImageUploading) setImageUploading = () => {};
+
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles) => {
-    const newImages = acceptedFiles.map((file, index) => ({
-      file,
-      index: images.length + index,
-    }));
-    console.log("onDrop - Dropped images:", newImages.map((img) => ({ index: img.index, name: img.file.name })));
-    if (singleImage) {
-      setImages(newImages.slice(0, 1));
-    } else {
-      setImages((prevImages) => [...prevImages, ...newImages]);
-    }
-  }, [images.length, singleImage]);
+  const onDrop = useCallback(
+    (acceptedFiles) => {
+      const newImages = acceptedFiles.map((file, index) => ({
+        file,
+        index: images.length + index,
+      }));
+      console.log(
+        "onDrop - Dropped images:",
+        newImages.map((img) => ({ index: img.index, name: img.file.name }))
+      );
+      if (singleImage) {
+        setImages(newImages.slice(0, 1));
+      } else {
+        setImages((prevImages) => [...prevImages, ...newImages]);
+      }
+    },
+    [images.length, singleImage]
+  );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -37,18 +46,30 @@ export default function ImageUpload({
     multiple: !singleImage,
   });
 
-  const filterImages = useCallback((index, event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    console.log("filterImages - Clicked to remove image with index:", index);
-    console.log("filterImages - Current images:", images.map((img) => ({ index: img.index, name: img.file.name })));
-    const newImages = images.filter((item) => item.index !== index);
-    console.log("filterImages - Filtered images:", newImages.map((img) => ({ index: img.index, name: img.file.name })));
-    setImages([...newImages]); // Spread to ensure new array reference
-  }, [images]);
+  const filterImages = useCallback(
+    (index, event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      console.log("filterImages - Clicked to remove image with index:", index);
+      console.log(
+        "filterImages - Current images:",
+        images.map((img) => ({ index: img.index, name: img.file.name }))
+      );
+      const newImages = images.filter((item) => item.index !== index);
+      console.log(
+        "filterImages - Filtered images:",
+        newImages.map((img) => ({ index: img.index, name: img.file.name }))
+      );
+      setImages([...newImages]); // Spread to ensure new array reference
+    },
+    [images]
+  );
 
   const handleSort = useCallback((newList) => {
-    console.log("handleSort - New order:", newList.map((img) => ({ index: img.index, name: img.file.name })));
+    console.log(
+      "handleSort - New order:",
+      newList.map((img) => ({ index: img.index, name: img.file.name }))
+    );
     setImages(newList);
   }, []);
 
@@ -89,7 +110,10 @@ export default function ImageUpload({
           throw new Error("No secure URL returned from Cloudinary");
         }
       } catch (error) {
-        console.error("uploadImage - Upload error:", error.response?.data || error.message);
+        console.error(
+          "uploadImage - Upload error:",
+          error.response?.data || error.message
+        );
         toast.error(error.response?.data?.error?.message || error.message);
         throw error;
       }
@@ -112,9 +136,7 @@ export default function ImageUpload({
   };
 
   const ImageItem = ({ item }) => (
-    <div
-      className="flex items-center justify-between border border-gray-200 rounded-xl p-3 mb-2 bg-gray-100 hover:bg-gray-100 transition-colors duration-200"
-    >
+    <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 mb-2 bg-gray-100 hover:bg-gray-100 transition-colors duration-200">
       <div className="flex items-center gap-3">
         {!singleImage && (
           <div className="drag-handle cursor-move">

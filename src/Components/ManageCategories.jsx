@@ -135,7 +135,10 @@ const ManageCategories = () => {
               <select
                 value={formFields.parent_category}
                 onChange={(e) =>
-                  setFormFields({ ...formFields, parent_category: e.target.value })
+                  setFormFields({
+                    ...formFields,
+                    parent_category: e.target.value,
+                  })
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               >
@@ -150,8 +153,10 @@ const ManageCategories = () => {
             <ImageUpload
               formFields={formFields}
               setFormFields={setFormFields}
+              fieldName="image" // ✅ important
               singleImage={true}
             />
+
             {editingCategory && editingCategory.image && (
               <div className="mt-2">
                 <p className="text-gray-600">Current Image:</p>
