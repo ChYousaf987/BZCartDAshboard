@@ -23,6 +23,11 @@ const Sidebar = () => {
       roles: ["superadmin", "admin", "team"],
     },
     {
+      path: "/completed-orders",
+      label: "Completed Orders",
+      roles: ["superadmin", "admin", "team"],
+    },
+    {
       path: "/add-product",
       label: "Add Product",
       roles: ["superadmin", "admin"],

@@ -1,5 +1,10 @@
 import React, { useEffect } from "react";
-import { Routes, Route, Navigate, BrowserRouter as Router } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  BrowserRouter as Router,
+} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders } from "./features/order/orderSlice";
 import { toast } from "react-hot-toast";
@@ -11,6 +16,7 @@ import EditProduct from "./Components/EditProduct.jsx";
 import Login from "./Components/Login.jsx";
 import AddSliders from "./Components/AddSliders.jsx";
 import Orders from "./Components/Orders.jsx";
+import CompletedOrders from "./Components/CompletedOrders.jsx";
 import OrderDetails from "./Components/OrderDetails.jsx";
 import PendingUsers from "./Components/PendingUsers.jsx";
 import ManageCategories from "./Components/ManageCategories.jsx";
@@ -119,6 +125,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/completed-orders"
+          element={
+            <ProtectedRoute>
+              <CompletedOrders />
             </ProtectedRoute>
           }
         />
