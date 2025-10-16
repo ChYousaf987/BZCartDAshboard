@@ -10,9 +10,34 @@ const CompletedOrders = () => {
   const { orders, loading, error } = useSelector((state) => state.orders);
   const [expanded, setExpanded] = useState(null);
 
-  const completed = orders.filter(
-    (o) => o.payment_status === "completed" || o.status === "delivered"
-  );
+  const completed = orders.filter((o) => o.status === "delivered");
+
+  // Calculate sales totals
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thisYear = new Date(now.getFullYear(), 0, 1);
+
+  const dailySales = completed
+    .filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= today;
+    })
+    .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+  const monthlySales = completed
+    .filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= thisMonth;
+    })
+    .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+  const yearlySales = completed
+    .filter((order) => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= thisYear;
+    })
+    .reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this order?")) return;
@@ -71,6 +96,23 @@ const CompletedOrders = () => {
             Completed Orders
           </h2>
         </div>
+
+        {/* Sales Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-dark mb-2">Daily Sales</h3>
+            <p className="text-2xl font-bold text-primary">Rs {dailySales.toFixed(2)}</p>
+          </div>
+          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-dark mb-2">Monthly Sales</h3>
+            <p className="text-2xl font-bold text-primary">Rs {monthlySales.toFixed(2)}</p>
+          </div>
+          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-dark mb-2">Yearly Sales</h3>
+            <p className="text-2xl font-bold text-primary">Rs {yearlySales.toFixed(2)}</p>
+          </div>
+        </div>
+
         <div className="bg-white rounded-3xl shadow-xl p-6">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -91,7 +133,7 @@ const CompletedOrders = () => {
                       colSpan={6}
                       className="px-4 py-6 text-center text-gray-500"
                     >
-                      No completed orders found.
+                      No delivered orders found.
                     </td>
                   </tr>
                 )}
