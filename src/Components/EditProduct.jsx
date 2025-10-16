@@ -50,6 +50,7 @@ const EditProduct = () => {
   ]);
 
   const [customSize, setCustomSize] = useState("");
+  const [highlights, setHighlights] = useState([]);
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -140,6 +141,7 @@ const EditProduct = () => {
           : [],
         product_stock: product.product_stock?.toString() || "",
         sizes: productSizes,
+        highlights: product.highlights || [],
         warranty: product.warranty || "",
         brand_name: product.brand_name || "",
         product_code: product.product_code || "",
@@ -152,6 +154,7 @@ const EditProduct = () => {
       });
       setSizeInputs(productSizes);
       setEnableSizes(product.sizes && product.sizes.length > 0);
+      setHighlights(product.highlights || [""]);
     }
   }, [product, id, formData]);
 
@@ -247,6 +250,7 @@ const EditProduct = () => {
       const sizesToSubmit = enableSizes
         ? sizeInputs.filter((size) => size.size && size.stock !== "")
         : [];
+      const highlightsToSubmit = highlights.filter((h) => h.trim() !== "");
       await dispatch(
         updateProduct({
           id,
@@ -256,6 +260,7 @@ const EditProduct = () => {
             product_discounted_price: discountedPrice,
             product_stock: stock,
             sizes: sizesToSubmit,
+            highlights: highlightsToSubmit,
             warranty: formData.warranty || "",
             shipping: shippingCost,
             payment: formData.payment,
@@ -621,6 +626,42 @@ const EditProduct = () => {
             rows={5}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Product Highlights</label>
+          {highlights.map((highlight, idx) => (
+            <div key={idx} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={highlight}
+                onChange={(e) => {
+                  const newHighlights = [...highlights];
+                  newHighlights[idx] = e.target.value;
+                  setHighlights(newHighlights);
+                }}
+                placeholder="Enter a product highlight"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {highlights.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHighlights(highlights.filter((_, i) => i !== idx))
+                  }
+                  className="p-2 text-red-500 hover:text-red-700"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setHighlights([...highlights, ""])}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            + Add Another Highlight
+          </button>
         </div>
         <button
           type="submit"

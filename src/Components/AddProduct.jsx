@@ -59,6 +59,7 @@ const AddProduct = () => {
   const [sizeInputs, setSizeInputs] = useState([{ size: "", stock: "" }]);
 
   const [customSize, setCustomSize] = useState("");
+  const [highlights, setHighlights] = useState([""]);
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -198,6 +199,7 @@ const AddProduct = () => {
       const sizesToSubmit = enableSizes
         ? sizeInputs.filter((size) => size.size && size.stock !== "")
         : [];
+      const highlightsToSubmit = highlights.filter((h) => h.trim() !== "");
       await dispatch(
         createProduct({
           ...formData,
@@ -205,6 +207,7 @@ const AddProduct = () => {
           product_discounted_price: discountedPrice,
           product_stock: stock,
           sizes: sizesToSubmit,
+          highlights: highlightsToSubmit,
           warranty: formData.warranty || "",
           shipping: shippingCost,
           payment: formData.payment,
@@ -224,6 +227,7 @@ const AddProduct = () => {
         subcategories: [],
         product_stock: "",
         sizes: [],
+        highlights: [],
         warranty: "",
         brand_name: "",
         product_code: "",
@@ -234,6 +238,7 @@ const AddProduct = () => {
         isNewArrival: false,
         isBestSeller: false,
       });
+      setHighlights([""]);
       setSizeInputs([
         { size: "S", stock: "" },
         { size: "M", stock: "" },
@@ -638,6 +643,42 @@ const AddProduct = () => {
             rows={5}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           ></textarea>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2">Product Highlights</label>
+          {highlights.map((highlight, idx) => (
+            <div key={idx} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={highlight}
+                onChange={(e) => {
+                  const newHighlights = [...highlights];
+                  newHighlights[idx] = e.target.value;
+                  setHighlights(newHighlights);
+                }}
+                placeholder="Enter a product highlight"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {highlights.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHighlights(highlights.filter((_, i) => i !== idx))
+                  }
+                  className="p-2 text-red-500 hover:text-red-700"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setHighlights([...highlights, ""])}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            + Add Another Highlight
+          </button>
         </div>
         <button
           type="submit"
