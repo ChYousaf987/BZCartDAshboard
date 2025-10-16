@@ -56,19 +56,9 @@ const AddProduct = () => {
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
   const [enableSizes, setEnableSizes] = useState(false);
-  const [sizeInputs, setSizeInputs] = useState([
-    { size: "S", stock: "" },
-    { size: "M", stock: "" },
-    { size: "L", stock: "" },
-    { size: "XL", stock: "" },
-  ]);
+  const [sizeInputs, setSizeInputs] = useState([{ size: "", stock: "" }]);
 
-  const sizeOptions = [
-    { value: "S", label: "Small" },
-    { value: "M", label: "Medium" },
-    { value: "L", label: "Large" },
-    { value: "XL", label: "Extra Large" },
-  ];
+  const [customSize, setCustomSize] = useState("");
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -436,18 +426,18 @@ const AddProduct = () => {
             <div className="space-y-3">
               {sizeInputs.map((sizeInput, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Select
-                    options={sizeOptions}
-                    classNamePrefix="select"
-                    styles={customSelectStyles}
-                    value={sizeOptions.find(
-                      (opt) => opt.value === sizeInput.size
-                    )}
-                    onChange={(selected) =>
-                      handleSizeChange(index, "size", selected ? selected.value : "")
+                  <input
+                    type="text"
+                    placeholder="Enter Size (e.g., S, M, L, 14, 16, 18)"
+                    value={sizeInput.size}
+                    onChange={(e) =>
+                      handleSizeChange(
+                        index,
+                        "size",
+                        e.target.value.toUpperCase()
+                      )
                     }
-                    placeholder="Select Size"
-                    className="w-1/2"
+                    className="w-1/2 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="number"
@@ -460,13 +450,49 @@ const AddProduct = () => {
                     step="1"
                     className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                   />
+                  {sizeInputs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newSizes = sizeInputs.filter(
+                          (_, i) => i !== index
+                        );
+                        setSizeInputs(newSizes);
+                      }}
+                      className="p-2 text-red-500 hover:text-red-700"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setSizeInputs([...sizeInputs, { size: "", stock: "" }])
+                }
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                + Add Another Size
+              </button>
             </div>
           )}
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">Warranty (optional)</label>
+          <label className="block text-gray-700 mb-2">
+            Warranty (optional)
+          </label>
           <input
             type="text"
             name="warranty"
@@ -477,7 +503,9 @@ const AddProduct = () => {
           />
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">Shipping Cost (Rs.)</label>
+          <label className="block text-gray-700 mb-2">
+            Shipping Cost (Rs.)
+          </label>
           <input
             type="number"
             name="shipping"

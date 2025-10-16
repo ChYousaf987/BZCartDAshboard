@@ -49,12 +49,7 @@ const EditProduct = () => {
     { size: "XL", stock: "" },
   ]);
 
-  const sizeOptions = [
-    { value: "S", label: "Small" },
-    { value: "M", label: "Medium" },
-    { value: "L", label: "Large" },
-    { value: "XL", label: "Extra Large" },
-  ];
+  const [customSize, setCustomSize] = useState("");
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -120,7 +115,10 @@ const EditProduct = () => {
               (s) => s.size === defaultSize.size
             );
             return existingSize
-              ? { size: existingSize.size, stock: existingSize.stock.toString() }
+              ? {
+                  size: existingSize.size,
+                  stock: existingSize.stock.toString(),
+                }
               : defaultSize;
           })
         : [
@@ -447,18 +445,18 @@ const EditProduct = () => {
             <div className="space-y-3">
               {sizeInputs.map((sizeInput, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Select
-                    options={sizeOptions}
-                    classNamePrefix="select"
-                    styles={customSelectStyles}
-                    value={sizeOptions.find(
-                      (opt) => opt.value === sizeInput.size
-                    )}
-                    onChange={(selected) =>
-                      handleSizeChange(index, "size", selected ? selected.value : "")
+                  <input
+                    type="text"
+                    placeholder="Enter Size (e.g., S, M, L, 14, 16, 18)"
+                    value={sizeInput.size}
+                    onChange={(e) =>
+                      handleSizeChange(
+                        index,
+                        "size",
+                        e.target.value.toUpperCase()
+                      )
                     }
-                    placeholder="Select Size"
-                    className="w-1/2"
+                    className="w-1/2 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="number"
@@ -477,7 +475,9 @@ const EditProduct = () => {
           )}
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">Warranty (optional)</label>
+          <label className="block text-gray-700 mb-2">
+            Warranty (optional)
+          </label>
           <input
             type="text"
             name="warranty"
@@ -488,7 +488,9 @@ const EditProduct = () => {
           />
         </div>
         <div>
-          <label className="block text-gray-700 mb-2">Shipping Cost (Rs.)</label>
+          <label className="block text-gray-700 mb-2">
+            Shipping Cost (Rs.)
+          </label>
           <input
             type="number"
             name="shipping"
