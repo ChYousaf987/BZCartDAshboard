@@ -39,7 +39,9 @@ const Orders = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-100 font-daraz">
         <div className="bg-white p-8 rounded-xl shadow-xl text-center max-w-md w-full">
           <h3 className="text-2xl font-bold text-dark mb-4">Access Denied</h3>
-          <p className="text-gray-700">You do not have permission to view this page.</p>
+          <p className="text-gray-700">
+            You do not have permission to view this page.
+          </p>
         </div>
       </div>
     );
@@ -86,39 +88,56 @@ const Orders = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order, index) => (
-                  <tr
-                    key={order._id}
-                    className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
-                  >
-                    <td className="px-4 py-3">{order._id}</td>
-                    <td className="px-4 py-3">{order.full_name || "No name"}</td>
-                    <td className="px-4 py-3">{order.total_amount?.toFixed(2) || "0.00"}</td>
-                    <td className="px-4 py-3">{getOrderSizes(order.products)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-md ${getStatusStyles(order.status)}`}>
-                        {order.status || "pending"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {order.createdAt
-                        ? new Date(order.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "No date"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/orders/${order._id}`}
-                        className="text-primary hover:underline"
-                      >
-                        View Details
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {orders
+                  .filter((o) => o.status !== "delivered")
+                  .map((order, index) => (
+                    <tr
+                      key={order._id}
+                      className={`border-b ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-100`}
+                    >
+                      <td className="px-4 py-3">{order._id}</td>
+                      <td className="px-4 py-3">
+                        {order.full_name || "No name"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {order.total_amount?.toFixed(2) || "0.00"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {getOrderSizes(order.products)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-md ${getStatusStyles(
+                            order.status
+                          )}`}
+                        >
+                          {order.status || "pending"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {order.createdAt
+                          ? new Date(order.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )
+                          : "No date"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to={`/orders/${order._id}`}
+                          className="text-primary hover:underline"
+                        >
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

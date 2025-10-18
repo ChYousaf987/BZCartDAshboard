@@ -42,15 +42,8 @@ const EditProduct = () => {
   const [error, setError] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [enableSizes, setEnableSizes] = useState(false);
-  const [sizeInputs, setSizeInputs] = useState([
-    { size: "S", stock: "" },
-    { size: "M", stock: "" },
-    { size: "L", stock: "" },
-    { size: "XL", stock: "" },
-  ]);
-
-  const [customSize, setCustomSize] = useState("");
-  const [highlights, setHighlights] = useState([]);
+  const [sizeInputs, setSizeInputs] = useState([{ size: "", stock: "" }]);
+  const [highlights, setHighlights] = useState([""]);
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -105,29 +98,12 @@ const EditProduct = () => {
 
   useEffect(() => {
     if (product && product._id === id && !formData) {
-      const productSizes = Array.isArray(product.sizes)
-        ? [
-            { size: "S", stock: "" },
-            { size: "M", stock: "" },
-            { size: "L", stock: "" },
-            { size: "XL", stock: "" },
-          ].map((defaultSize) => {
-            const existingSize = product.sizes.find(
-              (s) => s.size === defaultSize.size
-            );
-            return existingSize
-              ? {
-                  size: existingSize.size,
-                  stock: existingSize.stock.toString(),
-                }
-              : defaultSize;
-          })
-        : [
-            { size: "S", stock: "" },
-            { size: "M", stock: "" },
-            { size: "L", stock: "" },
-            { size: "XL", stock: "" },
-          ];
+      const productSizes = Array.isArray(product.sizes) && product.sizes.length > 0
+        ? product.sizes.map((size) => ({
+            size: size.size || "",
+            stock: size.stock?.toString() || "",
+          }))
+        : [{ size: "", stock: "" }];
       setFormData({
         product_name: product.product_name || "",
         product_description: product.product_description || "",
@@ -141,7 +117,7 @@ const EditProduct = () => {
           : [],
         product_stock: product.product_stock?.toString() || "",
         sizes: productSizes,
-        highlights: product.highlights || [],
+        highlights: product.highlights || [""],
         warranty: product.warranty || "",
         brand_name: product.brand_name || "",
         product_code: product.product_code || "",
@@ -154,7 +130,7 @@ const EditProduct = () => {
       });
       setSizeInputs(productSizes);
       setEnableSizes(product.sizes && product.sizes.length > 0);
-      setHighlights(product.highlights || [""]);
+      setHighlights(product.highlights && product.highlights.length > 0 ? product.highlights : [""]);
     }
   }, [product, id, formData]);
 
@@ -312,7 +288,7 @@ const EditProduct = () => {
 
   const handleSizeChange = (index, field, value) => {
     const newSizes = [...sizeInputs];
-    newSizes[index][field] = value;
+    newSizes[index][field] = field === "size" ? value.toUpperCase() : value;
     setSizeInputs(newSizes);
     setError(null);
   };
@@ -474,8 +450,42 @@ const EditProduct = () => {
                     step="1"
                     className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                   />
+                  {sizeInputs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newSizes = sizeInputs.filter(
+                          (_, i) => i !== index
+                        );
+                        setSizeInputs(newSizes);
+                      }}
+                      className="p-2 text-red-500 hover:text-red-700"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setSizeInputs([...sizeInputs, { size: "", stock: "" }])
+                }
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                + Add Another Size
+              </button>
             </div>
           )}
         </div>
