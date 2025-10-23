@@ -21,7 +21,7 @@ const Login = () => {
     {
       _id: "2",
       username: "Content Manager",
-      email: "content@example.com",
+      email: "content@gmail.com",
       password: "content123",
       role: "admin",
       isApproved: true,
@@ -30,7 +30,7 @@ const Login = () => {
     {
       _id: "3",
       username: "Team Member",
-      email: "team@example.com",
+      email: "team@gmail.com",
       password: "team123",
       role: "team",
       isApproved: true,
