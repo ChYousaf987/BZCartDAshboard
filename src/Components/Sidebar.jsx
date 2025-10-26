@@ -15,17 +15,17 @@ const Sidebar = () => {
     {
       path: "/product",
       label: "Dashboard",
-      roles: ["superadmin", "admin", "team"],
+      roles: ["superadmin", "admin"],
     },
     {
       path: "/orders",
       label: "Orders",
-      roles: ["superadmin", "admin", "team"],
+      roles: ["superadmin", "team"],
     },
     {
       path: "/completed-orders",
       label: "Completed Orders",
-      roles: ["superadmin", "admin", "team"],
+      roles: ["superadmin",  "team"],
     },
     {
       path: "/add-product",
@@ -43,8 +43,8 @@ const Sidebar = () => {
       label: "Categories",
       roles: ["superadmin", "admin"],
     },
-    { path: "/deals", label: "Deals", roles: ["superadmin", "admin"] },
-    { path: "/add-deal", label: "Add Deal", roles: ["superadmin", "admin"] },
+    { path: "/deals", label: "Deals", roles: ["superadmin"] },
+    { path: "/add-deal", label: "Add Deal", roles: ["superadmin"] },
   ];
 
   // Logout Function
