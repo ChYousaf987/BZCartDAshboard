@@ -3,6 +3,21 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteOrder } from "../features/order/orderSlice";
 import { PulseLoader } from "react-spinners";
 import { toast, Toaster } from "react-hot-toast";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from "recharts";
 
 const CompletedOrders = () => {
   const dispatch = useDispatch();
@@ -38,6 +53,52 @@ const CompletedOrders = () => {
       return orderDate >= thisYear;
     })
     .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+  // Prepare data for charts
+  const salesTrendData = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dayStart = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+
+    const daySales = completed
+      .filter((order) => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= dayStart && orderDate < dayEnd;
+      })
+      .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+    salesTrendData.push({
+      date: date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      sales: daySales,
+    });
+  }
+
+  const statusData = [
+    { name: "Delivered", value: completed.length, color: "#10B981" },
+  ];
+
+  const topProducts = {};
+  completed.forEach((order) => {
+    (order.products || []).forEach((item) => {
+      const name = item.product_id?.product_name || item.name || "Unknown";
+      topProducts[name] = (topProducts[name] || 0) + item.quantity;
+    });
+  });
+
+  const topProductsData = Object.entries(topProducts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([name, quantity]) => ({ name, quantity }));
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this order?")) return;
@@ -99,17 +160,100 @@ const CompletedOrders = () => {
 
         {/* Sales Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
-            <h3 className="text-lg font-semibold text-dark mb-2">Daily Sales</h3>
-            <p className="text-2xl font-bold text-primary">Rs {dailySales.toFixed(2)}</p>
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Daily Sales</h3>
+            <p className="text-3xl font-bold">Rs {dailySales.toFixed(2)}</p>
+            <p className="text-sm opacity-90">Today</p>
           </div>
-          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
-            <h3 className="text-lg font-semibold text-dark mb-2">Monthly Sales</h3>
-            <p className="text-2xl font-bold text-primary">Rs {monthlySales.toFixed(2)}</p>
+          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Monthly Sales</h3>
+            <p className="text-3xl font-bold">Rs {monthlySales.toFixed(2)}</p>
+            <p className="text-sm opacity-90">This Month</p>
           </div>
-          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
-            <h3 className="text-lg font-semibold text-dark mb-2">Yearly Sales</h3>
-            <p className="text-2xl font-bold text-primary">Rs {yearlySales.toFixed(2)}</p>
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Yearly Sales</h3>
+            <p className="text-3xl font-bold">Rs {yearlySales.toFixed(2)}</p>
+            <p className="text-sm opacity-90">This Year</p>
+          </div>
+        </div>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Sales Trend Chart */}
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <h3 className="text-xl font-bold text-dark mb-4">
+              Sales Trend (Last 7 Days)
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={salesTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value) => [`Rs ${value.toFixed(2)}`, "Sales"]}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#F26C2B"
+                  strokeWidth={3}
+                  dot={{ fill: "#F26C2B", strokeWidth: 2, r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Top Products Chart */}
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <h3 className="text-xl font-bold text-dark mb-4">
+              Top Selling Products
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={topProductsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="quantity" fill="#10B981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Order Status Pie Chart */}
+        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+          <h3 className="text-xl font-bold text-dark mb-4">
+            Order Status Overview
+          </h3>
+          <div className="flex justify-center">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 

@@ -98,12 +98,13 @@ const EditProduct = () => {
 
   useEffect(() => {
     if (product && product._id === id && !formData) {
-      const productSizes = Array.isArray(product.sizes) && product.sizes.length > 0
-        ? product.sizes.map((size) => ({
-            size: size.size || "",
-            stock: size.stock?.toString() || "",
-          }))
-        : [{ size: "", stock: "" }];
+      const productSizes =
+        Array.isArray(product.sizes) && product.sizes.length > 0
+          ? product.sizes.map((size) => ({
+              size: size.size || "",
+              stock: size.stock?.toString() || "",
+            }))
+          : [{ size: "", stock: "" }];
       setFormData({
         product_name: product.product_name || "",
         product_description: product.product_description || "",
@@ -130,7 +131,11 @@ const EditProduct = () => {
       });
       setSizeInputs(productSizes);
       setEnableSizes(product.sizes && product.sizes.length > 0);
-      setHighlights(product.highlights && product.highlights.length > 0 ? product.highlights : [""]);
+      setHighlights(
+        product.highlights && product.highlights.length > 0
+          ? product.highlights
+          : [""]
+      );
     }
   }, [product, id, formData]);
 
@@ -649,6 +654,12 @@ const EditProduct = () => {
                   newHighlights[idx] = e.target.value;
                   setHighlights(newHighlights);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setHighlights([...highlights, ""]);
+                  }
+                }}
                 placeholder="Enter a product highlight"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -665,13 +676,6 @@ const EditProduct = () => {
               )}
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => setHighlights([...highlights, ""])}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            + Add Another Highlight
-          </button>
         </div>
         <button
           type="submit"

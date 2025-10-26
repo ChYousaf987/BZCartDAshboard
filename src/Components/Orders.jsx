@@ -3,10 +3,50 @@ import { useSelector } from "react-redux";
 import { PulseLoader } from "react-spinners";
 import { toast, Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const Orders = () => {
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
   const { orders, loading, error } = useSelector((state) => state.orders);
+
+  // Prepare data for charts
+  const pendingOrders = orders.filter((o) => o.status !== "delivered");
+  const statusCounts = pendingOrders.reduce((acc, order) => {
+    acc[order.status] = (acc[order.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const statusData = Object.entries(statusCounts).map(([status, count]) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    value: count,
+    color:
+      status === "pending"
+        ? "#F59E0B"
+        : status === "processing"
+        ? "#3B82F6"
+        : status === "shipped"
+        ? "#8B5CF6"
+        : "#EF4444",
+  }));
+
+  const recentOrders = pendingOrders.slice(0, 10).map((order) => ({
+    id: order._id.slice(-8),
+    customer: order.full_name || "No name",
+    amount: order.total_amount || 0,
+    status: order.status,
+  }));
 
   const getStatusStyles = (status) => {
     switch (status) {
@@ -73,6 +113,83 @@ const Orders = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-dark">Orders</h2>
         </div>
+
+        {/* Order Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Total Orders</h3>
+            <p className="text-3xl font-bold">{pendingOrders.length}</p>
+            <p className="text-sm opacity-90">Pending/Processing</p>
+          </div>
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Pending</h3>
+            <p className="text-3xl font-bold">{statusCounts.pending || 0}</p>
+            <p className="text-sm opacity-90">Awaiting Action</p>
+          </div>
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Processing</h3>
+            <p className="text-3xl font-bold">{statusCounts.processing || 0}</p>
+            <p className="text-sm opacity-90">In Progress</p>
+          </div>
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-3xl shadow-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Shipped</h3>
+            <p className="text-3xl font-bold">{statusCounts.shipped || 0}</p>
+            <p className="text-sm opacity-90">On the Way</p>
+          </div>
+        </div>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Order Status Distribution */}
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <h3 className="text-xl font-bold text-dark mb-4">
+              Order Status Distribution
+            </h3>
+            <div className="flex justify-center">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Recent Orders Bar Chart */}
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <h3 className="text-xl font-bold text-dark mb-4">
+              Recent Order Values
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={recentOrders}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="id" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value) => [`Rs ${value.toFixed(2)}`, "Amount"]}
+                />
+                <Legend />
+                <Bar dataKey="amount" fill="#F26C2B" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         <div className="bg-white rounded-3xl shadow-xl p-6">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left" key={orders.length}>
