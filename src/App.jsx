@@ -26,6 +26,7 @@ import AllUser from "./Components/AllUser.jsx";
 import Deals from "./Components/Deals.jsx";
 import AddDeal from "./Components/AddDeal.jsx";
 import EditDeal from "./Components/EditDeal.jsx";
+import Campaigns from "./Components/Campaigns.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -213,6 +214,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <EditDeal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/campaigns"
+          element={
+            <ProtectedRoute>
+              <Campaigns />
             </ProtectedRoute>
           }
         />
