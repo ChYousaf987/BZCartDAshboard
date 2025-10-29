@@ -17,10 +17,7 @@ const Campaigns = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_BASE}/campaigns`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(`${API_BASE}/campaigns`);
       setCampaigns(response.data);
     } catch (error) {
       toast.error("Failed to fetch campaigns");
@@ -36,11 +33,9 @@ const Campaigns = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         `${API_BASE}/campaigns`,
-        { subject, body },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { subject, body }
       );
       toast.success("Campaign created successfully");
       setSubject("");
@@ -56,13 +51,9 @@ const Campaigns = () => {
   const sendCampaign = async (campaignId) => {
     setSending(campaignId);
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         `${API_BASE}/campaigns/${campaignId}/send`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        {}
       );
       toast.success("Campaign sent successfully");
       fetchCampaigns();
@@ -78,10 +69,7 @@ const Campaigns = () => {
       return;
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE}/campaigns/${campaignId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(`${API_BASE}/campaigns/${campaignId}`);
       toast.success("Campaign deleted successfully");
       fetchCampaigns();
     } catch (error) {
