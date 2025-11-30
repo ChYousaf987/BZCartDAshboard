@@ -33,10 +33,7 @@ const Campaigns = () => {
 
     setLoading(true);
     try {
-      await axios.post(
-        `${API_BASE}/campaigns`,
-        { subject, body }
-      );
+      await axios.post(`${API_BASE}/campaigns`, { subject, body });
       toast.success("Campaign created successfully");
       setSubject("");
       setBody("");
@@ -51,10 +48,7 @@ const Campaigns = () => {
   const sendCampaign = async (campaignId) => {
     setSending(campaignId);
     try {
-      await axios.post(
-        `${API_BASE}/campaigns/${campaignId}/send`,
-        {}
-      );
+      await axios.post(`${API_BASE}/campaigns/${campaignId}/send`, {});
       toast.success("Campaign sent successfully");
       fetchCampaigns();
     } catch (error) {

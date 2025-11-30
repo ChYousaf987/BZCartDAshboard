@@ -27,6 +27,7 @@ import Deals from "./Components/Deals.jsx";
 import AddDeal from "./Components/AddDeal.jsx";
 import EditDeal from "./Components/EditDeal.jsx";
 import Campaigns from "./Components/Campaigns.jsx";
+import Activity from "./Components/Activity.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -182,6 +183,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <div>Messages Page (Superadmin Only)</div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <Activity />
             </ProtectedRoute>
           }
         />

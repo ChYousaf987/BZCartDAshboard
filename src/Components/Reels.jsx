@@ -94,7 +94,7 @@ export default function ReelUploadComplete() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3003/api/reel/create-reel", // Use "https://api.bzcart.store/api/reel/create-reel" for production
+        "https://bzbackend.online/api/reel/create-reel", // production URL
         {
           title: formFields.title,
           description: formFields.description,
@@ -104,7 +104,10 @@ export default function ReelUploadComplete() {
       toast.success("Reel created successfully!");
       setFormFields({ title: "", description: "", video_url: "" });
     } catch (error) {
-      console.error("Reel creation error:", error.response?.data || error.message);
+      console.error(
+        "Reel creation error:",
+        error.response?.data || error.message
+      );
       toast.error(error.response?.data?.message || "Failed to create reel");
     }
   };

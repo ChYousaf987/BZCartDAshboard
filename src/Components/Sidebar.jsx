@@ -5,10 +5,11 @@ import { useSelector } from "react-redux";
 const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
   const { orders, newOrders } = useSelector((state) => state.orders);
-  const orderCount = orders.filter(
-    (order) => order.payment_status === "completed"
-  ).length;
-  const newOrderCount = newOrders.length;
+  // count only completed orders
+  const orderCount = Array.isArray(orders)
+    ? orders.filter((order) => order.payment_status === "completed").length
+    : 0;
+  const newOrderCount = Array.isArray(newOrders) ? newOrders.length : 0;
   const navigate = useNavigate();
 
   const navItems = [
@@ -46,6 +47,11 @@ const Sidebar = () => {
     { path: "/deals", label: "Deals", roles: ["superadmin"] },
     { path: "/add-deal", label: "Add Deal", roles: ["superadmin"] },
     { path: "/campaigns", label: "Campaigns", roles: ["superadmin"] },
+    {
+      path: "/activity",
+      label: "Activity",
+      roles: ["superadmin", "admin", "team"],
+    },
   ];
 
   // Logout Function

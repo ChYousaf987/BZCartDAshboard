@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:3003/api/slides";
+const BASE_URL = "https://bzbackend.online/api/slides";
 
 export const createSlide = async (slideData) => {
   const formData = new FormData();
