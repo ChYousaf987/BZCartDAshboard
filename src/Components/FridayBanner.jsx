@@ -8,11 +8,10 @@ const FridayBanner = () => {
   const [title, setTitle] = useState("");
   const [buttonText, setButtonText] = useState("");
   const [buttonLink, setButtonLink] = useState("");
-  const [timer, setTimer] = useState("");
+  const [duration, setDuration] = useState(""); // deal duration in days
   const [existingBanner, setExistingBanner] = useState(null);
 
-  // Directly set your backend API URL
-  const API = "http://localhost:3003/api/friday-banner";
+  const API = "https://bzbackend.online/api/friday-banner";
 
   const fetchBanner = async () => {
     try {
@@ -41,7 +40,13 @@ const FridayBanner = () => {
     form.append("title", title);
     form.append("buttonText", buttonText);
     form.append("buttonLink", buttonLink);
-    form.append("timer", timer);
+
+    // Calculate timer from duration (days)
+    if (duration) {
+      const now = new Date();
+      now.setDate(now.getDate() + Number(duration));
+      form.append("timer", now.toISOString());
+    }
 
     try {
       await axios.post(API, form);
@@ -70,43 +75,47 @@ const FridayBanner = () => {
 
       {/* Upload Form */}
       <form onSubmit={uploadBanner} className="space-y-4">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
+        <div className="flex flex-col">
+          <label htmlFor="">image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+        </div>
 
-        <input
-          type="file"
-          accept="video/*"
-          onChange={(e) => setVideo(e.target.files[0])}
-        />
-
+        <div className="flex flex-col">
+          <label htmlFor="">video</label>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => setVideo(e.target.files[0])}
+          />
+        </div>
         <input
           type="text"
           placeholder="Title (optional)"
           className="p-2 border rounded w-full"
           onChange={(e) => setTitle(e.target.value)}
         />
-
         <input
           type="text"
           placeholder="Button Text (optional)"
           className="p-2 border rounded w-full"
           onChange={(e) => setButtonText(e.target.value)}
         />
-
         <input
           type="text"
           placeholder="Button Link (optional)"
           className="p-2 border rounded w-full"
           onChange={(e) => setButtonLink(e.target.value)}
         />
-
         <input
-          type="datetime-local"
+          type="number"
+          placeholder="Deal Duration (days)"
           className="p-2 border rounded w-full"
-          onChange={(e) => setTimer(e.target.value)}
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
         />
 
         <button className="bg-blue-600 text-white py-2 px-5 rounded">
@@ -133,6 +142,12 @@ const FridayBanner = () => {
               className="mt-3 w-72 rounded"
             />
           )}
+
+          <p className="mt-2 text-sm text-gray-500">
+            {existingBanner.timer
+              ? `Ends on: ${new Date(existingBanner.timer).toLocaleString()}`
+              : "No timer set"}
+          </p>
 
           <button
             onClick={deleteBanner}
