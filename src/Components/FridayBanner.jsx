@@ -8,7 +8,7 @@ const FridayBanner = () => {
   const [title, setTitle] = useState("");
   const [buttonText, setButtonText] = useState("");
   const [buttonLink, setButtonLink] = useState("");
-  const [duration, setDuration] = useState(""); // deal duration in days
+  const [duration, setDuration] = useState("");
   const [existingBanner, setExistingBanner] = useState(null);
 
   const API = "https://bzbackend.online/api/friday-banner";
@@ -41,7 +41,6 @@ const FridayBanner = () => {
     form.append("buttonText", buttonText);
     form.append("buttonLink", buttonLink);
 
-    // Calculate timer from duration (days)
     if (duration) {
       const now = new Date();
       now.setDate(now.getDate() + Number(duration));
@@ -50,7 +49,7 @@ const FridayBanner = () => {
 
     try {
       await axios.post(API, form);
-      toast.success("Friday Banner Added");
+      toast.success("Banner Added");
       fetchBanner();
     } catch (err) {
       console.error(err);
@@ -73,10 +72,9 @@ const FridayBanner = () => {
     <div className="bg-white shadow rounded p-6">
       <h2 className="text-xl font-semibold mb-4">Friday Banner</h2>
 
-      {/* Upload Form */}
       <form onSubmit={uploadBanner} className="space-y-4">
-        <div className="flex flex-col">
-          <label htmlFor="">image</label>
+        <div>
+          <label>image</label>
           <input
             type="file"
             accept="image/*"
@@ -84,32 +82,34 @@ const FridayBanner = () => {
           />
         </div>
 
-        <div className="flex flex-col">
-          <label htmlFor="">video</label>
+        <div>
+          <label>video</label>
           <input
             type="file"
             accept="video/*"
             onChange={(e) => setVideo(e.target.files[0])}
           />
         </div>
+
         <input
           type="text"
-          placeholder="Title (optional)"
+          placeholder="Title"
           className="p-2 border rounded w-full"
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
           type="text"
-          placeholder="Button Text (optional)"
+          placeholder="Button Text"
           className="p-2 border rounded w-full"
           onChange={(e) => setButtonText(e.target.value)}
         />
         <input
           type="text"
-          placeholder="Button Link (optional)"
+          placeholder="Button Link"
           className="p-2 border rounded w-full"
           onChange={(e) => setButtonLink(e.target.value)}
         />
+
         <input
           type="number"
           placeholder="Deal Duration (days)"
@@ -123,7 +123,6 @@ const FridayBanner = () => {
         </button>
       </form>
 
-      {/* Show Existing Banner */}
       {existingBanner && (
         <div className="mt-6">
           <h3 className="font-bold text-lg">Current Banner</h3>
@@ -134,7 +133,6 @@ const FridayBanner = () => {
               className="mt-3 w-64 rounded"
             />
           )}
-
           {existingBanner.video && (
             <video
               src={`data:video/mp4;base64,${existingBanner.video}`}
