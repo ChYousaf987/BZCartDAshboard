@@ -33,14 +33,7 @@ const Campaigns = () => {
 
     setLoading(true);
     try {
-<<<<<<< HEAD
       await axios.post(`${API_BASE}/campaigns`, { subject, body });
-=======
-      await axios.post(
-        `${API_BASE}/campaigns`,
-        { subject, body }
-      );
->>>>>>> b0e5ed9ae87ab40c89ab7d886c67717796dfd8e0
       toast.success("Campaign created successfully");
       setSubject("");
       setBody("");
@@ -55,14 +48,7 @@ const Campaigns = () => {
   const sendCampaign = async (campaignId) => {
     setSending(campaignId);
     try {
-<<<<<<< HEAD
       await axios.post(`${API_BASE}/campaigns/${campaignId}/send`, {});
-=======
-      await axios.post(
-        `${API_BASE}/campaigns/${campaignId}/send`,
-        {}
-      );
->>>>>>> b0e5ed9ae87ab40c89ab7d886c67717796dfd8e0
       toast.success("Campaign sent successfully");
       fetchCampaigns();
     } catch (error) {
@@ -174,7 +160,11 @@ const Campaigns = () => {
                     </p>
                   )}
                   <div className="mt-2 p-2 bg-gray-50 rounded text-sm max-h-32 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap">{campaign.body}</pre>
+                    <pre className="whitespace-pre-wrap">
+                      {typeof campaign.body === "string"
+                        ? campaign.body
+                        : JSON.stringify(campaign.body, null, 2)}
+                    </pre>
                   </div>
                 </div>
               ))}

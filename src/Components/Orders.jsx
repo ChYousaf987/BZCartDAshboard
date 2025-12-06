@@ -197,6 +197,7 @@ const Orders = () => {
                 <tr>
                   <th className="px-4 py-3">Order ID</th>
                   <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">City</th>
                   <th className="px-4 py-3">Total (Rs)</th>
                   <th className="px-4 py-3">Size</th>
                   <th className="px-4 py-3">Status</th>
@@ -218,6 +219,7 @@ const Orders = () => {
                       <td className="px-4 py-3">
                         {order.full_name || "No name"}
                       </td>
+                      <td className="px-4 py-3">{order.city || "N/A"}</td>
                       <td className="px-4 py-3">
                         {order.total_amount?.toFixed(2) || "0.00"}
                       </td>

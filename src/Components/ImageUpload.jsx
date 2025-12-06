@@ -8,6 +8,76 @@ import toast from "react-hot-toast";
 import { BarLoader } from "react-spinners";
 import { ReactSortable } from "react-sortablejs";
 
+// Compress and convert images to WebP client-side with a target max size
+async function compressAndConvertToWebP(file, maxKB = 100) {
+  const maxBytes = maxKB * 1024;
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+
+  // Setup canvas at same size (we'll scale down if needed)
+  let canvas = document.createElement("canvas");
+  let ctx = canvas.getContext("2d");
+  let width = img.width;
+  let height = img.height;
+
+  // If image is very large, cap dimensions to speed up processing
+  const MAX_DIM = 1600;
+  if (width > MAX_DIM || height > MAX_DIM) {
+    const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Try reducing quality until under maxBytes or quality too low
+  let quality = 0.92;
+  let blob = await new Promise((res) =>
+    canvas.toBlob(res, "image/webp", quality)
+  );
+  // If already under size, return
+  while (blob && blob.size > maxBytes && quality > 0.15) {
+    quality -= 0.12; // reduce quality
+    blob = await new Promise((res) =>
+      canvas.toBlob(res, "image/webp", Math.max(0.08, quality))
+    );
+  }
+
+  // If still too big, try scaling down dimensions progressively
+  let scale = 0.9;
+  while (blob && blob.size > maxBytes && (width > 200 || height > 200)) {
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+    quality = Math.max(0.5, quality - 0.05);
+    blob = await new Promise((res) =>
+      canvas.toBlob(res, "image/webp", quality)
+    );
+    scale -= 0.05;
+    if (scale < 0.5) break;
+  }
+
+  if (!blob) throw new Error("Failed to convert image");
+
+  return blob; // Blob in webp format
+}
+
 export default function ImageUpload({
   formFields,
   setFormFields,
@@ -20,6 +90,8 @@ export default function ImageUpload({
 
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(false);
+  const [processedPreviews, setProcessedPreviews] = useState([]); // { index, name, dataUri, size }
+  const [processedReady, setProcessedReady] = useState(false);
 
   const onDrop = useCallback(
     (acceptedFiles) => {
@@ -33,8 +105,12 @@ export default function ImageUpload({
       );
       if (singleImage) {
         setImages(newImages.slice(0, 1));
+        setProcessedPreviews([]);
+        setProcessedReady(false);
       } else {
         setImages((prevImages) => [...prevImages, ...newImages]);
+        setProcessedPreviews([]);
+        setProcessedReady(false);
       }
     },
     [images.length, singleImage]
@@ -61,6 +137,8 @@ export default function ImageUpload({
         newImages.map((img) => ({ index: img.index, name: img.file.name }))
       );
       setImages([...newImages]); // Spread to ensure new array reference
+      setProcessedPreviews([]);
+      setProcessedReady(false);
     },
     [images]
   );
@@ -78,55 +156,175 @@ export default function ImageUpload({
       toast.error("Please select at least one image!");
       return;
     }
+    // Two-step flow:
+    // 1) If not yet processed, process each image (try backend, fallback to client), show sizes and require confirmation
+    // 2) If processedReady, upload processedPreviews to Cloudinary
 
     setImageLoading(true);
     setImageUploading(true);
 
-    let myImages = images.map(async (item) => {
-      try {
-        let data = new FormData();
-        data.append("file", item?.file);
-        data.append("upload_preset", "vapess");
-        data.append("cloud_name", "dibwum71a");
+    // Step 1: process images and show sizes
+    if (!processedReady) {
+      const previews = [];
+      for (const item of images) {
+        try {
+          let dataUri = null;
+          let processedSize = 0;
 
-        console.log("uploadImage - Sending upload request:", {
-          fileName: item?.file?.name,
-          size: item?.file?.size,
-        });
+          try {
+            const procForm = new FormData();
+            procForm.append("file", item.file);
 
-        let response = await axios.post(
-          "https://api.cloudinary.com/v1_1/dibwum71a/image/upload",
-          data,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
+            console.log(
+              "uploadImage - sending file to backend for processing",
+              {
+                name: item.file.name,
+                size: item.file.size,
+              }
+            );
+
+            const procResp = await axios.post(
+              "https://bzbackend.online/api/uploads/process-image",
+              procForm,
+              { headers: { "Content-Type": "multipart/form-data" } }
+            );
+
+            dataUri = procResp.data.dataUri;
+            processedSize = procResp.data.size || 0;
+            console.log("uploadImage - backend processed size", processedSize);
+          } catch (backendErr) {
+            // Backend failed (500 or network); fallback to client-side conversion
+            console.warn(
+              "uploadImage - backend processing failed, falling back to client-side",
+              backendErr?.response?.data || backendErr?.message || backendErr
+            );
+            try {
+              const blob = await compressAndConvertToWebP(item.file, 100);
+              processedSize = blob.size;
+              dataUri = await new Promise((res) => {
+                const reader = new FileReader();
+                reader.onload = () => res(reader.result);
+                reader.onerror = () => res(null);
+                reader.readAsDataURL(blob);
+              });
+            } catch (clientErr) {
+              console.error(
+                "uploadImage - client-side processing failed:",
+                clientErr
+              );
+              toast.error(
+                `Processing failed for ${item.file.name}. Try a smaller image.`
+              );
+              continue;
+            }
           }
-        );
 
-        console.log("uploadImage - Upload response:", response.data);
+          const isWebP = !!dataUri && dataUri.startsWith("data:image/webp");
+          const isWithin = processedSize && processedSize <= 100 * 1024;
+          const valid = isWebP && isWithin;
+          previews.push({
+            index: item.index,
+            name: item.file.name,
+            dataUri,
+            size: processedSize,
+            valid,
+          });
+        } catch (e) {
+          console.error(
+            "uploadImage - processing failed for",
+            item.file.name,
+            e
+          );
+          toast.error(
+            `Processing failed for ${item.file.name}: ${e.message || e}`
+          );
+        }
+      }
 
-        if (response.data.secure_url) {
-          return response.data.secure_url;
-        } else {
+      if (!previews.length) {
+        toast.error("No images could be processed. Try different images.");
+        setImageLoading(false);
+        setImageUploading(false);
+        return;
+      }
+
+      setProcessedPreviews(previews);
+      setProcessedReady(true);
+      setImageLoading(false);
+      setImageUploading(false);
+      // User will need to confirm upload (press button again)
+      return;
+    }
+
+    // Step 2: processedReady -> upload to Cloudinary
+    const uploadTasks = processedPreviews.map(async (p) => {
+      try {
+        if (!p.dataUri) throw new Error("No processed data URI available");
+
+        // If processed size is within limit, upload to Cloudinary
+        if (p.size && p.size <= 100 * 1024) {
+          const cloudForm = new FormData();
+          cloudForm.append("file", p.dataUri);
+          cloudForm.append("upload_preset", "vapess");
+          cloudForm.append("cloud_name", "dibwum71a");
+
+          const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dibwum71a/image/upload",
+            cloudForm,
+            { headers: { "Content-Type": "multipart/form-data" } }
+          );
+
+          if (response.data?.secure_url) return response.data.secure_url;
           throw new Error("No secure URL returned from Cloudinary");
         }
+
+        // Otherwise (too large for Cloudinary policy/requirement), upload to server via multer
+        // Convert dataURI to Blob
+        function dataURItoBlob(dataURI) {
+          const byteString = atob(dataURI.split(",")[1]);
+          const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+          }
+          return new Blob([ab], { type: mimeString });
+        }
+
+        const blob = dataURItoBlob(p.dataUri);
+        const serverForm = new FormData();
+        serverForm.append("file", blob, `${p.name.replace(/\s+/g, "_")}.webp`);
+
+        const serverResp = await axios.post(
+          "https://bzbackend.online/api/uploads/upload-server",
+          serverForm,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+
+        if (serverResp.data?.url) return serverResp.data.url;
+        throw new Error("No url returned from server upload");
       } catch (error) {
         console.error(
-          "uploadImage - Upload error:",
-          error.response?.data || error.message
+          "uploadImage - upload error:",
+          error?.response?.data || error?.message || error
         );
-        toast.error(error.response?.data?.error?.message || error.message);
+        toast.error(
+          error?.response?.data?.message || error.message || "Upload failed"
+        );
         throw error;
       }
     });
 
     try {
-      let imagesData = await Promise.all(myImages);
+      const imagesData = await Promise.all(uploadTasks);
       toast.success("Image(s) uploaded successfully!");
       setFormFields((prevFields) => ({
         ...prevFields,
         [fieldName]: singleImage ? imagesData[0] : imagesData,
       }));
       setImages([]);
+      setProcessedPreviews([]);
+      setProcessedReady(false);
     } catch (err) {
       console.error("uploadImage - Batch upload failed:", err);
     } finally {
@@ -245,6 +443,28 @@ export default function ImageUpload({
               <ImageItem key={item.index} item={item} />
             ))}
           </ReactSortable>
+          {processedPreviews?.length > 0 && (
+            <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+              <Typography className="text-sm font-semibold mb-2">
+                Processed Preview Sizes
+              </Typography>
+              {processedPreviews.map((p) => (
+                <div
+                  key={p.index}
+                  className="flex justify-between text-sm text-gray-700 mb-1"
+                >
+                  <div className="truncate pr-4">{p.name}</div>
+                  <div
+                    className={
+                      p.size > 100 * 1024 ? "text-red-600" : "text-green-600"
+                    }
+                  >
+                    {p.size ? `${Math.round(p.size / 1024)} KB` : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <Button
             disabled={imageLoading || images.length === 0}
             onClick={uploadImage}
@@ -261,7 +481,13 @@ export default function ImageUpload({
               textTransform: "none",
             }}
           >
-            {imageLoading ? <BarLoader color="white" /> : "Upload Image(s)"}
+            {imageLoading ? (
+              <BarLoader color="white" />
+            ) : processedReady ? (
+              `Confirm Upload (${processedPreviews.length})`
+            ) : (
+              "Prepare & Show Sizes"
+            )}
           </Button>
         </div>
       )}
@@ -273,6 +499,29 @@ export default function ImageUpload({
           {images.map((item) => (
             <ImageItem key={item.index} item={item} />
           ))}
+          {processedPreviews?.length > 0 && (
+            <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+              <Typography className="text-sm font-semibold mb-2">
+                Processed Preview
+              </Typography>
+              {processedPreviews.map((p) => (
+                <div
+                  key={p.index}
+                  className="flex justify-between text-sm text-gray-700 mb-1"
+                >
+                  <div className="truncate pr-4">{p.name}</div>
+                  <div
+                    className={
+                      p.size > 100 * 1024 ? "text-red-600" : "text-green-600"
+                    }
+                  >
+                    {p.size ? `${Math.round(p.size / 1024)} KB` : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <Button
             disabled={imageLoading || images.length === 0}
             onClick={uploadImage}
@@ -289,7 +538,13 @@ export default function ImageUpload({
               textTransform: "none",
             }}
           >
-            {imageLoading ? <BarLoader color="white" /> : "Upload Image(s)"}
+            {imageLoading ? (
+              <BarLoader color="white" />
+            ) : processedReady ? (
+              `Confirm Upload (${processedPreviews.length})`
+            ) : (
+              "Prepare & Show Sizes"
+            )}
           </Button>
         </div>
       )}

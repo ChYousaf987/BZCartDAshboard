@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import {
   Routes,
   Route,
@@ -28,6 +28,7 @@ import AddDeal from "./Components/AddDeal.jsx";
 import EditDeal from "./Components/EditDeal.jsx";
 import Campaigns from "./Components/Campaigns.jsx";
 import FridayBanner from "./Components/FridayBanner.jsx";
+const Activity = React.lazy(() => import("./Components/Activity.jsx"));
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -190,7 +191,11 @@ const App = () => {
           path="/activity"
           element={
             <ProtectedRoute>
-              <Activity />
+              <Suspense
+                fallback={<div className="p-8">Loading Activity...</div>}
+              >
+                <Activity />
+              </Suspense>
             </ProtectedRoute>
           }
         />

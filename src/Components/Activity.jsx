@@ -18,6 +18,8 @@ const Activity = () => {
   const [limit, setLimit] = useState(100);
   const [cartLoading, setCartLoading] = useState(false);
   const [cartItems, setCartItems] = useState(null);
+  const [selectedCartUser, setSelectedCartUser] = useState(null);
+  const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [dashboardSecret, setDashboardSecret] = useState(
     localStorage.getItem("ANALYTICS_DASHBOARD_SECRET") || ""
   );
@@ -35,16 +37,28 @@ const Activity = () => {
     }
   };
 
-  const fetchEvents = async () => {
+  // fetchEvents accepts optional overrides: { user_id, guest_id }
+  // fetchEvents accepts optional overrides: { user_id, guest_id }
+  // options: { limitOverride: number, includeDateRange: boolean }
+  const fetchEvents = async (overrides = {}, options = {}) => {
     setLoading(true);
     setError(null);
     try {
       // fetch without Authorization header — dashboard uses dummy login
       const params = new URLSearchParams();
-      params.set("limit", String(limit || 100));
+      const useLimit = options.limitOverride ?? limit ?? 100;
+      params.set("limit", String(useLimit));
       if (eventType) params.set("event_type", eventType);
-      if (startDate) params.set("start", new Date(startDate).toISOString());
-      if (endDate) params.set("end", new Date(endDate).toISOString());
+      // when fetching for a specific visitor, fetch all available events (skip date range unless explicitly requested)
+      if (
+        options.includeDateRange ||
+        (!overrides.user_id && !overrides.guest_id)
+      ) {
+        if (startDate) params.set("start", new Date(startDate).toISOString());
+        if (endDate) params.set("end", new Date(endDate).toISOString());
+      }
+      if (overrides.user_id) params.set("user_id", overrides.user_id);
+      if (overrides.guest_id) params.set("guest_id", overrides.guest_id);
 
       const secret = localStorage.getItem("ANALYTICS_DASHBOARD_SECRET");
       const headers = secret ? { "x-dashboard-secret": secret } : {};
@@ -52,12 +66,41 @@ const Activity = () => {
         headers,
       });
       const data = await res.json();
+      // if we requested events for a particular user/guest, set selectedVisitor state
+      if (overrides.user_id || overrides.guest_id) {
+        setSelectedVisitor({
+          id: overrides.user_id || overrides.guest_id,
+          guest: !!overrides.guest_id,
+        });
+      }
       setEvents(data || []);
     } catch (err) {
       console.error("Failed to fetch analytics events", err);
       setError(err.message || "Failed to fetch events");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch cart for a specific user (user_id or guest_id)
+  const fetchCartForUser = async (user) => {
+    setCartLoading(true);
+    setCartItems(null);
+    try {
+      const secret = localStorage.getItem("ANALYTICS_DASHBOARD_SECRET");
+      const headers = secret ? { "x-dashboard-secret": secret } : {};
+      const q = user.guest
+        ? `?guest_id=${encodeURIComponent(user.id)}`
+        : `?user_id=${user.id}`;
+      const res = await fetch(`${API_BASE}/cart${q}`, { headers });
+      const data = await res.json();
+      setCartItems(Array.isArray(data) ? data : []);
+      setSelectedCartUser(user);
+    } catch (err) {
+      console.error("Failed to fetch cart for user", err);
+      setCartItems([]);
+    } finally {
+      setCartLoading(false);
     }
   };
 
@@ -102,6 +145,33 @@ const Activity = () => {
         return acc;
       }, {})
     : {};
+
+  // Derive a short visitors list (unique users / guests) from events
+  const visitors = Object.values(
+    events.reduce((acc, e) => {
+      const uid = e.user_id
+        ? `user:${e.user_id}`
+        : e.guest_id
+        ? `guest:${e.guest_id}`
+        : null;
+      if (!uid) return acc;
+      if (!acc[uid]) {
+        const isGuest = uid.startsWith("guest:");
+        acc[uid] = {
+          id: uid.split(":")[1],
+          guest: isGuest,
+          count: 0,
+          display:
+            e.user_display || (isGuest ? `guest:${uid.split(":")[1]}` : ""),
+          lastSeen: e.createdAt,
+        };
+      }
+      acc[uid].count += 1;
+      if (new Date(e.createdAt) > new Date(acc[uid].lastSeen))
+        acc[uid].lastSeen = e.createdAt;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.count - a.count);
 
   // Nicely format device metadata; fall back to UA sniffing when os_name missing
   const formatMeta = (meta = {}) => {
@@ -341,9 +411,213 @@ const Activity = () => {
         </div>
       </div>
 
+      {/* Visitors list + cart modal */}
+      {visitors && visitors.length > 0 && (
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="col-span-1 p-3 border rounded bg-gray-50">
+            <div className="text-sm font-semibold mb-2">Visitors</div>
+            <div className="space-y-2 max-h-48 overflow-auto">
+              {visitors.map((v) => (
+                <div
+                  key={(v.guest ? "guest:" : "user:") + v.id}
+                  className="flex items-center justify-between gap-2 p-2 bg-white rounded"
+                >
+                  <div className="text-xs">
+                    <div className="font-medium truncate">
+                      {v.display || v.id}
+                    </div>
+                    <div className="text-gray-500">Events: {v.count}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        // fetch all events for this visitor (ignore date filters)
+                        if (v.guest)
+                          fetchEvents(
+                            { guest_id: v.id },
+                            { limitOverride: 1000 }
+                          );
+                        else
+                          fetchEvents(
+                            { user_id: v.id },
+                            { limitOverride: 1000 }
+                          );
+                        setSelectedVisitor({
+                          id: v.id,
+                          guest: v.guest,
+                          display: v.display,
+                        });
+                        setSelectedEvent(null);
+                      }}
+                      className="px-2 py-1 text-xs rounded bg-primary text-white"
+                    >
+                      Show
+                    </button>
+                    <button
+                      onClick={() =>
+                        fetchCartForUser({ id: v.id, guest: v.guest })
+                      }
+                      className="px-2 py-1 text-xs rounded bg-gray-200"
+                    >
+                      View Cart
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="col-span-2 p-3 border rounded bg-white">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="text-sm text-gray-500">
+                  Click a visitor to filter events
+                </div>
+                <div className="text-xs text-gray-400">
+                  Use "View Cart" to open the server-side cart snapshot.
+                </div>
+              </div>
+              {selectedVisitor ? (
+                <div className="text-right">
+                  <div className="text-sm font-medium">
+                    Showing:{" "}
+                    {selectedVisitor.display ||
+                      (selectedVisitor.guest
+                        ? `guest:${selectedVisitor.id}`
+                        : selectedVisitor.id)}
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => {
+                        setSelectedVisitor(null);
+                        fetchEvents();
+                      }}
+                      className="px-2 py-1 text-xs rounded bg-gray-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            {selectedVisitor && (
+              <div className="mb-2 text-sm text-gray-600">
+                Total time on site (from events):{" "}
+                {(() => {
+                  const totalMs = events.reduce(
+                    (acc, e) => acc + (e.duration_ms || 0),
+                    0
+                  );
+                  if (!totalMs) return "0s";
+                  const s = Math.floor(totalMs / 1000);
+                  const m = Math.floor(s / 60);
+                  const sec = s % 60;
+                  return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
           Error: {error}
+        </div>
+      )}
+
+      {/* Cart modal */}
+      {selectedCartUser && cartItems && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white w-full max-w-3xl rounded-lg shadow-xl overflow-auto max-h-[85vh] p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-bold">
+                  Cart for {selectedCartUser.display || selectedCartUser.id}
+                </h3>
+                <div className="text-xs text-gray-500">
+                  {selectedCartUser.guest ? "guest" : "user"}:{" "}
+                  {selectedCartUser.id}
+                </div>
+              </div>
+              <div>
+                <button
+                  onClick={() => {
+                    setSelectedCartUser(null);
+                    setCartItems(null);
+                  }}
+                  className="px-3 py-1 rounded bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {cartLoading ? (
+              <div className="text-gray-500">Loading cart...</div>
+            ) : !cartItems || cartItems.length === 0 ? (
+              <div className="text-gray-500">No cart items found</div>
+            ) : (
+              <div className="space-y-3">
+                {cartItems.map((it) => {
+                  // Defensive rendering: some cart items include a full product object in product_id
+                  const prodObj =
+                    it.product_id && typeof it.product_id === "object"
+                      ? it.product_id
+                      : null;
+                  const name =
+                    typeof it.product_name === "string"
+                      ? it.product_name
+                      : prodObj
+                      ? prodObj.product_name ||
+                        prodObj.product_code ||
+                        prodObj._id
+                      : typeof it.product_id === "string"
+                      ? it.product_id
+                      : it._id || "item";
+                  const img =
+                    it.selected_image ||
+                    (prodObj &&
+                      Array.isArray(prodObj.product_images) &&
+                      prodObj.product_images[0]) ||
+                    "";
+                  const price =
+                    it.price ||
+                    (prodObj &&
+                      (prodObj.product_discounted_price ||
+                        prodObj.product_base_price)) ||
+                    null;
+                  const key = it._id || (prodObj && prodObj._id) || name;
+
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center gap-3 p-2 border rounded"
+                    >
+                      {img ? (
+                        <img
+                          src={img}
+                          alt="product"
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      ) : null}
+                      <div>
+                        <div className="font-semibold">{name}</div>
+                        <div className="text-xs text-gray-500">
+                          Qty: {it.quantity ?? "-"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Size: {it.selected_size ?? "-"}
+                        </div>
+                      </div>
+                      <div className="ml-auto text-sm text-gray-700">
+                        {price ? `Rs. ${price}` : ""}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

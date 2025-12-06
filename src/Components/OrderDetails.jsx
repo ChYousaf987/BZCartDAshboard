@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchOrderById, updateOrderStatus, deleteOrder } from "../features/order/orderSlice";
+import {
+  fetchOrderById,
+  updateOrderStatus,
+  deleteOrder,
+} from "../features/order/orderSlice";
 import { PulseLoader } from "react-spinners";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -132,7 +136,9 @@ const OrderDetails = () => {
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 className="text-2xl md:text-3xl font-bold text-dark mb-4">Error</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-dark mb-4">
+            Error
+          </h3>
           <p className="text-red-500 leading-relaxed text-lg">
             {error || "Order not found"}
           </p>
@@ -179,24 +185,61 @@ const OrderDetails = () => {
         <div className="bg-white rounded-3xl shadow-xl p-6 transform transition-transform hover:shadow-2xl animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-xl font-semibold text-dark mb-4">Customer Information</h3>
-              <p><strong>Name:</strong> {currentOrder.full_name || "No name"}</p>
-              <p><strong>Email:</strong> {currentOrder.order_email || "No email"}</p>
-              <p><strong>Phone:</strong> {currentOrder.phone_number || "No phone"}</p>
-              <p><strong>Shipping Address:</strong> {currentOrder.shipping_address || "No address"}</p>
+              <h3 className="text-xl font-semibold text-dark mb-4">
+                Customer Information
+              </h3>
+              <p>
+                <strong>Name:</strong> {currentOrder.full_name || "No name"}
+              </p>
+              <p>
+                <strong>Email:</strong> {currentOrder.order_email || "No email"}
+              </p>
+              <p>
+                <strong>Phone:</strong>{" "}
+                {currentOrder.phone_number || "No phone"}
+              </p>
+              <p>
+                <strong>City:</strong> {currentOrder.city || "N/A"}
+              </p>
+              <p>
+                <strong>Shipping Address:</strong>{" "}
+                {currentOrder.shipping_address || "No address"}
+              </p>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-dark mb-4">Order Information</h3>
-              <p><strong>Order ID:</strong> {currentOrder._id}</p>
-              <p><strong>Date:</strong> {currentOrder.createdAt ? new Date(currentOrder.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }) : "No date"}</p>
-              <p><strong>Payment Status:</strong> {currentOrder.payment_status || "Unknown"}</p>
-              <p><strong>Total Amount:</strong> Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}</p>
+              <h3 className="text-xl font-semibold text-dark mb-4">
+                Order Information
+              </h3>
+              <p>
+                <strong>Order ID:</strong> {currentOrder._id}
+              </p>
+              <p>
+                <strong>Date:</strong>{" "}
+                {currentOrder.createdAt
+                  ? new Date(currentOrder.createdAt).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )
+                  : "No date"}
+              </p>
+              <p>
+                <strong>Payment Status:</strong>{" "}
+                {currentOrder.payment_status || "Unknown"}
+              </p>
+              <p>
+                <strong>Total Amount:</strong> Rs{" "}
+                {currentOrder.total_amount?.toFixed(2) || "0.00"}
+              </p>
               {currentOrder.discount_applied && (
-                <p><strong>Discount Applied:</strong> {currentOrder.discount_code || "Unknown"} (Original: Rs {currentOrder.original_amount?.toFixed(2) || "0.00"})</p>
+                <p>
+                  <strong>Discount Applied:</strong>{" "}
+                  {currentOrder.discount_code || "Unknown"} (Original: Rs{" "}
+                  {currentOrder.original_amount?.toFixed(2) || "0.00"})
+                </p>
               )}
               <div className="mt-4">
                 <strong>Status:</strong>
@@ -204,7 +247,9 @@ const OrderDetails = () => {
                   value={currentOrder.status || "pending"}
                   onChange={(e) => handleStatusChange(e.target.value)}
                   disabled={statusUpdating}
-                  className={`ml-2 border rounded-md px-2 py-1 text-sm font-medium ${getStatusStyles(currentOrder.status)} focus:outline-none focus:ring-2 focus:ring-primary`}
+                  className={`ml-2 border rounded-md px-2 py-1 text-sm font-medium ${getStatusStyles(
+                    currentOrder.status
+                  )} focus:outline-none focus:ring-2 focus:ring-primary`}
                 >
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
@@ -212,11 +257,19 @@ const OrderDetails = () => {
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
-                {statusUpdating && <PulseLoader size={6} color="#F26C2B" className="ml-2 inline" />}
+                {statusUpdating && (
+                  <PulseLoader
+                    size={6}
+                    color="#F26C2B"
+                    className="ml-2 inline"
+                  />
+                )}
               </div>
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-dark mt-6 mb-4">Products</h3>
+          <h3 className="text-xl font-semibold text-dark mt-6 mb-4">
+            Products
+          </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-gradient-to-r from-primary to-dark text-white uppercase">
@@ -232,7 +285,9 @@ const OrderDetails = () => {
                 {currentOrder.products.map((item, index) => (
                   <tr
                     key={item.product_id?._id || index}
-                    className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 transition-colors`}
+                    className={`border-b ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-gray-100 transition-colors`}
                   >
                     <td className="px-4 py-3">
                       {item.selected_image ? (
@@ -241,7 +296,10 @@ const OrderDetails = () => {
                           alt={item.product_id?.product_name || "Product"}
                           className="w-12 h-12 object-cover rounded-md border border-gray-200"
                           onError={(e) => {
-                            console.error("Image load error for product:", item.product_id?._id);
+                            console.error(
+                              "Image load error for product:",
+                              item.product_id?._id
+                            );
                             e.target.src = "https://placehold.co/150x150";
                           }}
                         />
@@ -249,8 +307,12 @@ const OrderDetails = () => {
                         <span className="text-gray-500 text-xs">No image</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">{item.product_id?.product_name || "Unknown Product"}</td>
-                    <td className="px-4 py-3">{item.product_id?.brand_name || "No brand"}</td>
+                    <td className="px-4 py-3">
+                      {item.product_id?.product_name || "Unknown Product"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.product_id?.brand_name || "No brand"}
+                    </td>
                     <td className="px-4 py-3">{item.selected_size || "N/A"}</td>
                     <td className="px-4 py-3">{item.quantity}</td>
                   </tr>
@@ -258,8 +320,12 @@ const OrderDetails = () => {
               </tbody>
               <tfoot>
                 <tr className="bg-gray-100 font-semibold">
-                  <td colSpan="4" className="px-4 py-3 text-right">Total Amount:</td>
-                  <td className="px-4 py-3">Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}</td>
+                  <td colSpan="4" className="px-4 py-3 text-right">
+                    Total Amount:
+                  </td>
+                  <td className="px-4 py-3">
+                    Rs {currentOrder.total_amount?.toFixed(2) || "0.00"}
+                  </td>
                 </tr>
               </tfoot>
             </table>
