@@ -27,7 +27,7 @@ import Deals from "./Components/Deals.jsx";
 import AddDeal from "./Components/AddDeal.jsx";
 import EditDeal from "./Components/EditDeal.jsx";
 import Campaigns from "./Components/Campaigns.jsx";
-import Activity from "./Components/Activity.jsx";
+import FridayBanner from "./Components/FridayBanner.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -231,6 +231,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Campaigns />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friday-banner"
+          element={
+            <ProtectedRoute>
+              <FridayBanner />
             </ProtectedRoute>
           }
         />

@@ -38,6 +38,11 @@ const Sidebar = () => {
       label: "Add Slider",
       roles: ["superadmin", "admin"],
     },
+    {
+      path: "/friday-banner",
+      label: "Friday Banner",
+      roles: ["superadmin", "admin"],
+    },
     { path: "/AllUser", label: "Users", roles: ["superadmin"] },
     {
       path: "/manage-categories",
