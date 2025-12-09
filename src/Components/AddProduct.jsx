@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import ImageUpload from "./ImageUpload";
-import { createProduct } from "../store/productSlice";
+import { createProduct, fetchProducts } from "../store/productSlice";
 import Select from "react-select";
 import axios from "axios";
 import ErrorBoundary from "./ErrorBoundary";
@@ -60,6 +60,7 @@ const AddProduct = () => {
 
   const [customSize, setCustomSize] = useState("");
   const [highlights, setHighlights] = useState([""]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const paymentOptions = [
     { value: "Cash on Delivery", label: "Cash on Delivery" },
@@ -111,6 +112,12 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    // Prevent double submission
+    if (isSubmitting) {
+      toast.error("Please wait, product is being submitted...");
+      return;
+    }
 
     if (categoryLoading) {
       setError("Categories are still loading. Please wait.");
@@ -200,6 +207,9 @@ const AddProduct = () => {
         ? sizeInputs.filter((size) => size.size && size.stock !== "")
         : [];
       const highlightsToSubmit = highlights.filter((h) => h.trim() !== "");
+
+      setIsSubmitting(true);
+
       await dispatch(
         createProduct({
           ...formData,
@@ -246,11 +256,15 @@ const AddProduct = () => {
         { size: "XL", stock: "" },
       ]);
       setEnableSizes(false);
+      // Refetch products after creation to ensure dashboard shows the new product
+      dispatch(fetchProducts());
       navigate("/product");
     } catch (err) {
       const errorMessage = err.message || "Failed to create product";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -682,10 +696,14 @@ const AddProduct = () => {
         </div>
         <button
           type="submit"
-          disabled={categoryLoading || imageUploading}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={categoryLoading || imageUploading || isSubmitting}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
         >
-          {categoryLoading || imageUploading ? "Processing..." : "Add Product"}
+          {categoryLoading || imageUploading
+            ? "Processing..."
+            : isSubmitting
+            ? "Creating Product..."
+            : "Add Product"}
         </button>
       </form>
       <Toaster position="top-right" autoClose={3000} />

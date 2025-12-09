@@ -22,13 +22,24 @@ export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        "https://bzbackend.online/api/products/products"
+      // Simple GET with cache busting and increased timeout
+      const url =
+        "https://bzbackend.online/api/products/products?_t=" + Date.now();
+      console.log("fetchProducts: Requesting from", url);
+      const response = await axios.get(url, { timeout: 10000 }); // 10 second timeout
+      console.log(
+        "fetchProducts: Success - got",
+        response.data?.length || 0,
+        "products"
       );
       return response.data;
     } catch (err) {
+      console.error("fetchProducts error - Status:", err.response?.status);
+      console.error("fetchProducts error - Data:", err.response?.data);
+      console.error("fetchProducts error - Message:", err.message);
+      console.error("fetchProducts error - Full error:", err);
       return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch products"
+        err.response?.data?.message || err.message || "Failed to fetch products"
       );
     }
   }
@@ -255,10 +266,11 @@ const productSlice = createSlice({
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
+        // action.payload is just the product ID
         state.products = state.products.filter(
-          (product) => product._id !== action.payload.productId
+          (product) => product._id !== action.payload
         );
-        if (state.product?._id === action.payload.productId) {
+        if (state.product?._id === action.payload) {
           state.product = null;
         }
       })

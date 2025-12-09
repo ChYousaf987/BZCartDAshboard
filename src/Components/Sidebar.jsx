@@ -5,9 +5,9 @@ import { useSelector } from "react-redux";
 const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("myUser")) || null;
   const { orders, newOrders } = useSelector((state) => state.orders);
-  // count only completed orders
+  // count only pending orders (not delivered/completed)
   const orderCount = Array.isArray(orders)
-    ? orders.filter((order) => order.payment_status === "completed").length
+    ? orders.filter((order) => order.status !== "delivered").length
     : 0;
   const newOrderCount = Array.isArray(newOrders) ? newOrders.length : 0;
   const navigate = useNavigate();

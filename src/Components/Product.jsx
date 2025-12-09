@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts, deleteProduct } from "../store/productSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import Select from "react-select";
 import { PulseLoader } from "react-spinners";
@@ -49,6 +49,7 @@ const customSelectStyles = {
 const Product = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { products, loading, error } = useSelector((state) => state.products);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState({
@@ -58,6 +59,7 @@ const Product = () => {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [deletingIds, setDeletingIds] = useState(new Set());
 
   // Check user authentication and role
   const user = JSON.parse(localStorage.getItem("myUser"));
@@ -72,6 +74,7 @@ const Product = () => {
   }
 
   useEffect(() => {
+    // Fetch categories
     setCategoryLoading(true);
     axios
       .get("https://bzbackend.online/api/categories/categories")
@@ -97,18 +100,55 @@ const Product = () => {
         setCategoryLoading(false);
       });
 
-    dispatch(fetchProducts());
-  }, [dispatch]);
+    // Always refetch products - this ensures fresh data every time component mounts or pathname changes
+    console.log(
+      "Product component: Fetching products at",
+      new Date().toISOString()
+    );
+    dispatch(fetchProducts()).then((result) => {
+      if (result?.payload) {
+        console.log(
+          "Product component: Got",
+          result.payload?.length || 0,
+          "products"
+        );
+      } else if (result?.error) {
+        console.error(
+          "Product component: Failed to fetch products - Error:",
+          result.error
+        );
+      }
+    });
+  }, [dispatch, location.pathname]); // Refetch when pathname changes
 
   const handleDelete = (id) => {
+    // Prevent double deletion attempts
+    if (deletingIds.has(id)) {
+      toast.error("This product is already being deleted...");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this product?")) {
+      setDeletingIds((prev) => new Set(prev).add(id));
+
       dispatch(deleteProduct(id))
         .unwrap()
         .then(() => {
           toast.success("Product deleted successfully!");
         })
         .catch((err) => {
-          toast.error(err || "Failed to delete product");
+          const errorMsg =
+            typeof err === "string"
+              ? err
+              : err?.message || "Failed to delete product";
+          toast.error(errorMsg);
+        })
+        .finally(() => {
+          setDeletingIds((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(id);
+            return newSet;
+          });
         });
     }
   };
@@ -447,11 +487,22 @@ const Product = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(item._id)}
-                      className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200"
-                      title="Delete Product"
+                      disabled={deletingIds.has(item._id)}
+                      className={`p-2 text-white rounded-lg transition-colors duration-200 ${
+                        deletingIds.has(item._id)
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
+                      title={
+                        deletingIds.has(item._id)
+                          ? "Deleting..."
+                          : "Delete Product"
+                      }
                     >
                       <svg
-                        className="w-5 h-5"
+                        className={`w-5 h-5 ${
+                          deletingIds.has(item._id) ? "animate-spin" : ""
+                        }`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
