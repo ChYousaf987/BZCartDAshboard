@@ -7,6 +7,8 @@ const API_BASE = "https://bzbackend.online/api/analytics";
 const Activity = () => {
   const [summary, setSummary] = useState(null);
   const [monthly, setMonthly] = useState(null);
+  const [weekly, setWeekly] = useState(null);
+  const [usersMap, setUsersMap] = useState({});
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -109,6 +111,8 @@ const Activity = () => {
     fetchSummary();
     fetchEvents();
     fetchMonthly();
+    fetchWeekly();
+    fetchAllUsers();
   }, []);
 
   // NO polling — Activity refresh is manual by clicking the Refresh button
@@ -122,6 +126,35 @@ const Activity = () => {
       setMonthly(data);
     } catch (err) {
       console.error("Failed to fetch monthly stats", err);
+    }
+  };
+
+  const fetchWeekly = async () => {
+    try {
+      const secret = localStorage.getItem("ANALYTICS_DASHBOARD_SECRET");
+      const headers = secret ? { "x-dashboard-secret": secret } : {};
+      const res = await fetch(`${API_BASE}/weekly`, { headers });
+      const data = await res.json();
+      setWeekly(data);
+    } catch (err) {
+      console.error("Failed to fetch weekly stats", err);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const res = await fetch("https://bzbackend.online/api/users/all-users");
+      const data = await res.json();
+      // build map of id->user
+      const map = {};
+      if (Array.isArray(data)) {
+        data.forEach((u) => {
+          map[String(u._id)] = u;
+        });
+      }
+      setUsersMap(map);
+    } catch (err) {
+      console.error("Failed to fetch users for activity UI", err);
     }
   };
 
@@ -254,6 +287,185 @@ const Activity = () => {
           <div className="text-sm text-gray-500">Purchases (30d)</div>
           <div className="text-2xl font-bold">
             {monthly ? monthly.totals.order_placed : "—"}
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly breakdown: unique visitors (first-time), returning visitors, registered users */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 border rounded bg-gray-50">
+          <div className="text-sm text-gray-500">Unique (7d)</div>
+          <div className="text-2xl font-bold">
+            {weekly ? weekly.guests?.unique_count ?? "—" : "—"}
+          </div>
+          <div className="text-sm text-gray-600 mt-2">
+            Adds:{" "}
+            {weekly
+              ? weekly.guests?.breakdown?.unique?.add_to_cart ?? "—"
+              : "—"}
+          </div>
+          <div className="text-sm text-gray-600">
+            Purchases:{" "}
+            {weekly
+              ? weekly.guests?.breakdown?.unique?.order_placed ?? "—"
+              : "—"}
+          </div>
+        </div>
+
+        <div className="p-4 border rounded bg-gray-50">
+          <div className="text-sm text-gray-500">Visitors (7d)</div>
+          <div className="text-2xl font-bold">
+            {weekly ? weekly.guests?.returning_count ?? "—" : "—"}
+          </div>
+          <div className="text-sm text-gray-600 mt-2">
+            Adds:{" "}
+            {weekly
+              ? weekly.guests?.breakdown?.visitors?.add_to_cart ?? "—"
+              : "—"}
+          </div>
+          <div className="text-sm text-gray-600">
+            Purchases:{" "}
+            {weekly
+              ? weekly.guests?.breakdown?.visitors?.order_placed ?? "—"
+              : "—"}
+          </div>
+        </div>
+
+        <div className="p-4 border rounded bg-gray-50">
+          <div className="text-sm text-gray-500">Registered (7d)</div>
+          <div className="text-2xl font-bold">
+            {weekly ? weekly.registered?.active_count ?? "—" : "—"}
+          </div>
+          <div className="text-sm text-gray-600 mt-2">
+            New: {weekly ? weekly.registered?.new_count ?? "—" : "—"}
+          </div>
+          <div className="text-sm text-gray-600">
+            Returning:{" "}
+            {weekly ? weekly.registered?.returning_count ?? "—" : "—"}
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Adds / Purchases (new)
+          </div>
+          <div className="text-sm text-gray-600">
+            {weekly
+              ? `${
+                  weekly.registered?.breakdown?.new?.add_to_cart ?? 0
+                } adds / ${
+                  weekly.registered?.breakdown?.new?.order_placed ?? 0
+                } purchases`
+              : "—"}
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Adds / Purchases (returning)
+          </div>
+          <div className="text-sm text-gray-600">
+            {weekly
+              ? `${
+                  weekly.registered?.breakdown?.returning?.add_to_cart ?? 0
+                } adds / ${
+                  weekly.registered?.breakdown?.returning?.order_placed ?? 0
+                } purchases`
+              : "—"}
+          </div>
+        </div>
+      </div>
+
+      {/* Lists for quick inspection: Unique guests and Registered new users (sample ids) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="p-3 border rounded bg-white">
+          <div className="text-sm font-semibold mb-2">
+            Unique (first-time) — sample
+          </div>
+          <div className="space-y-2 max-h-48 overflow-auto">
+            {weekly &&
+            Array.isArray(weekly.guests?.unique_ids) &&
+            weekly.guests.unique_ids.length ? (
+              weekly.guests.unique_ids.map((gid) => (
+                <div
+                  key={gid}
+                  className="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded"
+                >
+                  <div className="text-xs truncate">guest:{gid}</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        fetchEvents({ guest_id: gid }, { limitOverride: 1000 });
+                        setSelectedVisitor({ id: gid, guest: true });
+                      }}
+                      className="px-2 py-1 text-xs rounded bg-primary text-white"
+                    >
+                      Show
+                    </button>
+                    <button
+                      onClick={() => fetchCartForUser({ id: gid, guest: true })}
+                      className="px-2 py-1 text-xs rounded bg-gray-200"
+                    >
+                      View Cart
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-gray-500">
+                No sample unique guests
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-3 border rounded bg-white">
+          <div className="text-sm font-semibold mb-2">
+            Registered — new (first-time) — sample
+          </div>
+          <div className="space-y-2 max-h-48 overflow-auto">
+            {weekly &&
+            Array.isArray(weekly.registered?.new_ids) &&
+            weekly.registered.new_ids.length ? (
+              weekly.registered.new_ids.map((uid) => (
+                <div
+                  key={uid}
+                  className="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded"
+                >
+                  <div className="text-xs truncate">
+                    {usersMap && usersMap[uid]
+                      ? usersMap[uid].username ||
+                        usersMap[uid].email ||
+                        `user:${uid}`
+                      : `user:${uid}`}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        fetchEvents({ user_id: uid }, { limitOverride: 1000 });
+                        setSelectedVisitor({
+                          id: uid,
+                          guest: false,
+                          display:
+                            usersMap && usersMap[uid]
+                              ? usersMap[uid].username || usersMap[uid].email
+                              : undefined,
+                        });
+                      }}
+                      className="px-2 py-1 text-xs rounded bg-primary text-white"
+                    >
+                      Show
+                    </button>
+                    <button
+                      onClick={() =>
+                        fetchCartForUser({ id: uid, guest: false })
+                      }
+                      className="px-2 py-1 text-xs rounded bg-gray-200"
+                    >
+                      View Cart
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-gray-500">
+                No sample registered new users
+              </div>
+            )}
           </div>
         </div>
       </div>
